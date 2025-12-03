@@ -1,0 +1,23 @@
+name: firepulse-api-services
+
+services:
+  config-service:
+    image: firepulse-api-config-service
+    pull_policy: never
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        - SERVICE_NAME=config-service
+    env_file: .env
+    container_name: firepulse-api-config-service
+    restart: always
+    ports:
+      - '8888:8888'
+    networks:
+      - firepulse_api
+
+networks:
+  firepulse_api:
+    name: firepulse_api
+    driver: bridge
