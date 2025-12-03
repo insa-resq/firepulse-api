@@ -11,14 +11,12 @@ services:
         - SERVICE_NAME=config-service
     container_name: firepulse-api-config-service
     restart: always
-    environment:
-      - EUREKA_ENVIRONMENT=${EUREKA_ENVIRONMENT}
     ports:
-      - '8888:8888'
+      - '8000:8080'
     networks:
       - firepulse_api
     healthcheck:
-      test: ["CMD", "wget", "-q", "-O-", "http://localhost:8888/actuator/health"]
+      test: ["CMD", "wget", "-q", "-O-", "http://localhost:8080/actuator/health"]
       start_period: 5s
       start_interval: 5s
       interval: 30s
@@ -36,20 +34,122 @@ services:
     container_name: firepulse-api-discovery-service
     restart: always
     environment:
-      - CONFIG_SERVER_URI=http://config-service:8888
+      - CONFIG_SERVER_URI=http://config-service:8080
     ports:
-      - '8761:8761'
+      - '8001:8080'
     networks:
       - firepulse_api
     healthcheck:
-      test: ["CMD", "wget", "-q", "-O-", "http://localhost:8761/actuator/health"]
-      start_period: 10s
+      test: ["CMD", "wget", "-q", "-O-", "http://localhost:8080/actuator/health"]
+      start_period: 15s
       start_interval: 5s
       interval: 30s
       timeout: 5s
       retries: 3
     depends_on:
       config-service:
+        condition: service_healthy
+
+  brigadeflow-service:
+    image: firepulse-api-brigadeflow-service
+    pull_policy: never
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        - SERVICE_NAME=brigadeflow-service
+    container_name: firepulse-api-brigadeflow-service
+    restart: always
+    environment:
+      - CONFIG_SERVER_URI=http://config-service:8080
+      - DATABASE_HOST=${DATABASE_HOST}
+      - DATABASE_PORT=${DATABASE_PORT}
+      - DATABASE_NAME=${DATABASE_NAME}
+      - DATABASE_USER=${DATABASE_USER}
+      - DATABASE_PASSWORD=${DATABASE_PASSWORD}
+    ports:
+      - '8002:8080'
+    networks:
+      - firepulse_api
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O-", "http://localhost:8080/actuator/health"]
+      start_period: 45s
+      start_interval: 5s
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    depends_on:
+      config-service:
+        condition: service_healthy
+      discovery-service:
+        condition: service_healthy
+
+  pyrosense-service:
+    image: firepulse-api-pyrosense-service
+    pull_policy: never
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        - SERVICE_NAME=pyrosense-service
+    container_name: firepulse-api-pyrosense-service
+    restart: always
+    environment:
+      - CONFIG_SERVER_URI=http://config-service:8080
+      - DATABASE_HOST=${DATABASE_HOST}
+      - DATABASE_PORT=${DATABASE_PORT}
+      - DATABASE_NAME=${DATABASE_NAME}
+      - DATABASE_USER=${DATABASE_USER}
+      - DATABASE_PASSWORD=${DATABASE_PASSWORD}
+    ports:
+      - '8003:8080'
+    networks:
+      - firepulse_api
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O-", "http://localhost:8080/actuator/health"]
+      start_period: 45s
+      start_interval: 5s
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    depends_on:
+      config-service:
+        condition: service_healthy
+      discovery-service:
+        condition: service_healthy
+
+  stationlogix-service:
+    image: firepulse-api-stationlogix-service
+    pull_policy: never
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        - SERVICE_NAME=stationlogix-service
+    container_name: firepulse-api-stationlogix-service
+    restart: always
+    environment:
+      - CONFIG_SERVER_URI=http://config-service:8080
+      - DATABASE_HOST=${DATABASE_HOST}
+      - DATABASE_PORT=${DATABASE_PORT}
+      - DATABASE_NAME=${DATABASE_NAME}
+      - DATABASE_USER=${DATABASE_USER}
+      - DATABASE_PASSWORD=${DATABASE_PASSWORD}
+    ports:
+      - '8004:8080'
+    networks:
+      - firepulse_api
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O-", "http://localhost:8080/actuator/health"]
+      start_period: 45s
+      start_interval: 5s
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    depends_on:
+      config-service:
+        condition: service_healthy
+      discovery-service:
         condition: service_healthy
 
 networks:
