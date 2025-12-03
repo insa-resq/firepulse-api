@@ -9,13 +9,48 @@ services:
       dockerfile: Dockerfile
       args:
         - SERVICE_NAME=config-service
-    env_file: .env
     container_name: firepulse-api-config-service
     restart: always
+    environment:
+      - EUREKA_ENVIRONMENT=${EUREKA_ENVIRONMENT}
     ports:
       - '8888:8888'
     networks:
       - firepulse_api
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O-", "http://localhost:8888/actuator/health"]
+      start_period: 5s
+      start_interval: 5s
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+  discovery-service:
+    image: firepulse-api-discovery-service
+    pull_policy: never
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        - SERVICE_NAME=discovery-service
+    container_name: firepulse-api-discovery-service
+    restart: always
+    environment:
+      - CONFIG_SERVER_URI=http://config-service:8888
+    ports:
+      - '8761:8761'
+    networks:
+      - firepulse_api
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O-", "http://localhost:8761/actuator/health"]
+      start_period: 10s
+      start_interval: 5s
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    depends_on:
+      config-service:
+        condition: service_healthy
 
 networks:
   firepulse_api:

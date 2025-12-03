@@ -1,4 +1,4 @@
-package org.resq.firepulseapi.configservice.logging;
+package org.resq.firepulseapi.discoveryservice.logging;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Configuration;
