@@ -9,7 +9,8 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 public class WebConfig implements WebMvcConfigurer {
     private final RequestLoggingInterceptor requestLoggingInterceptor;
 
-    public WebConfig(@Autowired RequestLoggingInterceptor requestLoggingInterceptor) {
+    @Autowired
+    public WebConfig(RequestLoggingInterceptor requestLoggingInterceptor) {
         this.requestLoggingInterceptor = requestLoggingInterceptor;
     }
 

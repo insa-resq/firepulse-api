@@ -16,6 +16,8 @@
     <properties>
         <java.version>21</java.version>
         <spring-cloud.version>2025.1.0</spring-cloud.version>
+        <maven-surefire.version>3.5.1</maven-surefire.version>
+        <bytebuddy.version>1.17.8</bytebuddy.version>
     </properties>
     <dependencies>
         <dependency>
@@ -60,6 +62,23 @@
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>${maven-surefire.version}</version>
+                <dependencies>
+                    <dependency>
+                        <groupId>net.bytebuddy</groupId>
+                        <artifactId>byte-buddy-agent</artifactId>
+                        <version>${bytebuddy.version}</version>
+                    </dependency>
+                </dependencies>
+                <configuration>
+                    <argLine>
+                        -javaagent:${settings.localRepository}/net/bytebuddy/byte-buddy-agent/${bytebuddy.version}/byte-buddy-agent-${bytebuddy.version}.jar
+                    </argLine>
+                </configuration>
             </plugin>
         </plugins>
     </build>
