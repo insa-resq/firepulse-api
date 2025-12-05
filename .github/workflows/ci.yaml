@@ -57,7 +57,8 @@ jobs:
             echo "changed_services=[]" >> $GITHUB_OUTPUT
           else
             echo "Changed services: ${changed_services[*]}"
-            services_json=$(printf '%s\n' "${changed_services[@]}" | jq -R . | jq -s .)
+            services_json=$(printf '%s,' "${changed_services[@]}")
+            services_json="[${services_json%,}]"
             echo "changed_services=$services_json" >> $GITHUB_OUTPUT
           fi
 
