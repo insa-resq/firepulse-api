@@ -1,5 +1,6 @@
 name: firepulse-api-services
 
+# The `image` and `container_name` fields MUST have the value 'firepulse-api-{service-name}'
 services:
   config-service:
     image: firepulse-api-config-service

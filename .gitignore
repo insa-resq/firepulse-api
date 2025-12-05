@@ -20,6 +20,7 @@ buildNumber.properties
 .DS_Store
 .env*
 !.env.example
+!.env.ci
 
 aHELP.md
 !**/src/main/**/target/
