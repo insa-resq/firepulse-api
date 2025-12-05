@@ -47,11 +47,11 @@ jobs:
         id: changes
         run: |
           changed_services=()
-          if [ "${{ steps.filter.outputs.all }}" = 'true' || "${{ steps.filter.outputs.brigadeflow-service }}" = 'true' ]; then changed_services+=("brigadeflow-service"); fi
-          if [ "${{ steps.filter.outputs.all }}" = 'true' || "${{ steps.filter.outputs.config-service }}" = 'true' ]; then changed_services+=("config-service"); fi
-          if [ "${{ steps.filter.outputs.all }}" = 'true' || "${{ steps.filter.outputs.discovery-service }}" = 'true' ]; then changed_services+=("discovery-service"); fi
-          if [ "${{ steps.filter.outputs.all }}" = 'true' || "${{ steps.filter.outputs.pyrosense-service }}" = 'true' ]; then changed_services+=("pyrosense-service"); fi
-          if [ "${{ steps.filter.outputs.all }}" = 'true' || "${{ steps.filter.outputs.stationlogix-service }}" = 'true' ]; then changed_services+=("stationlogix-service"); fi
+          if [ "${{ steps.filter.outputs.all }}" = 'true' ] || [ "${{ steps.filter.outputs.brigadeflow-service }}" = 'true' ]; then changed_services+=("brigadeflow-service"); fi
+          if [ "${{ steps.filter.outputs.all }}" = 'true' ] || [ "${{ steps.filter.outputs.config-service }}" = 'true' ]; then changed_services+=("config-service"); fi
+          if [ "${{ steps.filter.outputs.all }}" = 'true' ] || [ "${{ steps.filter.outputs.discovery-service }}" = 'true' ]; then changed_services+=("discovery-service"); fi
+          if [ "${{ steps.filter.outputs.all }}" = 'true' ] || [ "${{ steps.filter.outputs.pyrosense-service }}" = 'true' ]; then changed_services+=("pyrosense-service"); fi
+          if [ "${{ steps.filter.outputs.all }}" = 'true' ] || [ "${{ steps.filter.outputs.stationlogix-service }}" = 'true' ]; then changed_services+=("stationlogix-service"); fi
           if [ ${#changed_services[@]} -eq 0 ]; then
             echo "No services changed."
             echo "changed_services=[]" >> $GITHUB_OUTPUT
