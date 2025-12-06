@@ -54,20 +54,20 @@ pipeline {
                         string(credentialsId: 'database-password', variable: 'DATABASE_PASSWORD')
                     ]) {
                         // Create/Override .env file on deployment server
-                        sh """
-                            sshpass -p "${SSH_PASSWORD}" ssh -o StrictHostKeyChecking=no ${SSH_USER}@${DEPLOYMENT_SERVER} '
-                                mkdir -p ${DEPLOYMENT_DIRECTORY}
-                                echo "DATABASE_HOST=${DATABASE_HOST}" > ${DEPLOYMENT_DIRECTORY}/.env
-                                echo "DATABASE_NAME=${DATABASE_NAME}" >> ${DEPLOYMENT_DIRECTORY}/.env
-                                echo "DATABASE_USER=${DATABASE_USER}" >> ${DEPLOYMENT_DIRECTORY}/.env
-                                echo "DATABASE_PASSWORD=${DATABASE_PASSWORD}" >> ${DEPLOYMENT_DIRECTORY}/.env
-                                chmod 600 ${DEPLOYMENT_DIRECTORY}/.env
+                        sh '''
+                            sshpass -p "$SSH_PASSWORD" ssh -o StrictHostKeyChecking=no $SSH_USER@$DEPLOYMENT_SERVER '
+                                mkdir -p $DEPLOYMENT_DIRECTORY
+                                echo "DATABASE_HOST=$DATABASE_HOST" > $DEPLOYMENT_DIRECTORY/.env
+                                echo "DATABASE_NAME=$DATABASE_NAME" >> $DEPLOYMENT_DIRECTORY/.env
+                                echo "DATABASE_USER=$DATABASE_USER" >> $DEPLOYMENT_DIRECTORY/.env
+                                echo "DATABASE_PASSWORD=$DATABASE_PASSWORD" >> $DEPLOYMENT_DIRECTORY/.env
+                                chmod 600 $DEPLOYMENT_DIRECTORY/.env
                             '
-                        """
+                        '''
                         // Transfer docker-compose.yaml
-                        sh """
-                            sshpass -p "${SSH_PASSWORD}" scp -o StrictHostKeyChecking=no docker-compose.yaml ${SSH_USER}@${DEPLOYMENT_SERVER}:${DEPLOYMENT_DIRECTORY}/
-                        """
+                        sh '''
+                            sshpass -p "$SSH_PASSWORD" scp -o StrictHostKeyChecking=no docker-compose.yaml $SSH_USER@$DEPLOYMENT_SERVER:$DEPLOYMENT_DIRECTORY/
+                        '''
                     }
                 }
             }
@@ -82,11 +82,11 @@ pipeline {
                         string(credentialsId: 'github-token', variable: 'GITHUB_TOKEN')
                     ]) {
                         def services = env.ORDERED_SERVICES.split(',')
-                        sh """
-                            sshpass -p "${SSH_PASSWORD}" ssh -o StrictHostKeyChecking=no ${SSH_USER}@${DEPLOYMENT_SERVER} '
-                                echo "${GITHUB_TOKEN}" | docker login ghcr.io -u "jenkins" --password-stdin
+                        sh '''
+                            sshpass -p "$SSH_PASSWORD" ssh -o StrictHostKeyChecking=no $SSH_USER@$DEPLOYMENT_SERVER '
+                                echo "$GITHUB_TOKEN" | docker login ghcr.io -u "jenkins" --password-stdin
                             '
-                        """
+                        '''
                         try {
                             services.each { service ->
                                 stage("Deploy ${service}") {
@@ -94,18 +94,18 @@ pipeline {
                                     try {
                                         // Execute on remote, capture exit status
                                         def result = sh(
-                                            script: """
-                                                sshpass -p "${SSH_PASSWORD}" ssh -o StrictHostKeyChecking=no ${SSH_USER}@${DEPLOYMENT_SERVER} '
+                                            script: '''
+                                                sshpass -p "$SSH_PASSWORD" ssh -o StrictHostKeyChecking=no $SSH_USER@$DEPLOYMENT_SERVER '
                                                     set -e
-                                                    cd ${DEPLOYMENT_DIRECTORY}
-                                                    echo "Pulling updated image for ${service}..."
-                                                    export IMAGE_TAG=${IMAGE_TAG}
-                                                    docker compose pull ${service}
-                                                    echo Starting ${service}..."
-                                                    docker compose up -d ${service} --wait
-                                                    echo "${service} deployed successfully!"
+                                                    cd $DEPLOYMENT_DIRECTORY
+                                                    echo "Pulling updated image for $service..."
+                                                    export IMAGE_TAG=$IMAGE_TAG
+                                                    docker compose pull $service
+                                                    echo "Starting $service..."
+                                                    docker compose up -d $service --wait
+                                                    echo "$service deployed successfully!"
                                                 '
-                                            """,
+                                            ''',
                                             returnStatus: true
                                         )
 
@@ -123,12 +123,12 @@ pipeline {
                             error(err.toString())
                         } finally {
                             // always attempt to clean up images and logout from registry
-                            sh """
-                                sshpass -p "${SSH_PASSWORD}" ssh -o StrictHostKeyChecking=no ${SSH_USER}@${DEPLOYMENT_SERVER} '
+                            sh '''
+                                sshpass -p "$SSH_PASSWORD" ssh -o StrictHostKeyChecking=no $SSH_USER@$DEPLOYMENT_SERVER '
                                     docker image prune -f || true
                                     docker logout ghcr.io || true
                                 '
-                            """
+                            '''
                         }
                     }
                 }
