@@ -2,17 +2,10 @@ pipeline {
     agent any
 
     parameters {
-        choice(
-            name: 'SERVICE',
-            choices: [
-                'ALL',
-                'config-service',
-                'discovery-service',
-                'brigadeflow-service',
-                'pyrosense-service',
-                'stationlogix-service'
-            ],
-            description: 'Select service to deploy'
+        string(
+            name: 'SERVICES',
+            description: 'Comma-separated list of services to deploy (e.g., service1,service2). Use "ALL" to deploy all services.',
+            defaultValue: 'ALL'
         )
     }
 
@@ -20,6 +13,7 @@ pipeline {
         DEPLOYMENT_SERVER = '192.168.10.46'
         DEPLOY_PATH = '~/firepulse-api'
         IMAGE_TAG = 'latest'
+        ALL_SERVICES = 'config-service,discovery-service,brigadeflow-service,pyrosense-service,stationlogix-service'
 
         DEPLOYMENT_USER = credentials('deployment-server-ssh')
         GITHUB_TOKEN = credentials('github-token')
@@ -35,14 +29,14 @@ pipeline {
             steps {
                 script {
                     // Check if triggered by GitHub Actions via parameters
-                    if (params.SERVICE && params.SERVICE != 'ALL') {
-                        env.SERVICES_TO_DEPLOY = params.SERVICE
-                        echo "Deployment triggered for service: ${params.SERVICE}"
-                    } else if (params.SERVICE == 'ALL') {
-                        env.SERVICES_TO_DEPLOY = 'config-service,discovery-service,brigadeflow-service,pyrosense-service,stationlogix-service'
+                    if (params.SERVICES && params.SERVICES != 'ALL') {
+                        env.SERVICES_TO_DEPLOY = params.SERVICES
+                        echo "Deployment triggered for service: ${params.SERVICES}"
+                    } else if (params.SERVICES == 'ALL') {
+                        env.SERVICES_TO_DEPLOY = env.ALL_SERVICES
                         echo "Manual deployment of all services"
                     } else {
-                        env.SERVICES_TO_DEPLOY = 'config-service,discovery-service,brigadeflow-service,pyrosense-service,stationlogix-service'
+                        env.SERVICES_TO_DEPLOY = env.ALL_SERVICES
                         echo "Default: deploying all services"
                     }
 

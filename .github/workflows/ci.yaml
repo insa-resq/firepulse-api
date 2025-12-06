@@ -37,6 +37,7 @@ jobs:
               - Dockerfile
               - docker-compose.yaml
               - .github/workflows/ci.yaml
+              - Jenkinsfile
             brigadeflow-service:
               - 'brigadeflow-service/**'
             config-service:
@@ -170,13 +171,9 @@ jobs:
     needs: [detect-changes, push]
     if: ${{ needs.detect-changes.outputs.changed_services != '[]' && github.event_name == 'push' && github.ref_name == 'main' }}
     runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        module: ${{ fromJson(needs.detect-changes.outputs.changed_services) }}
     steps:
       - name: Trigger Jenkins deployment via webhook
-        run: |          
+        run: |
           curl -X POST "${{ secrets.JENKINS_URL }}/job/firepulse-api-deployment/buildWithParameters" \
             --user "${{ secrets.JENKINS_USER }}:${{ secrets.JENKINS_TOKEN }}" \
-            --data-urlencode "SERVICE=${{ matrix.module }}" \
+            --data-urlencode "SERVICES=${{ join(fromJson(needs.detect-changes.outputs.changed_services), ',') }}" \
