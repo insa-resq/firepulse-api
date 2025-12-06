@@ -108,9 +108,10 @@ jobs:
         run: cp .env.ci .env
 
       - name: Build the Docker image
-        run: docker compose -f docker-compose.yaml build ${{ matrix.module }}
-        env:
-          IMAGE_TAG: ${{ env.IMAGE_SECONDARY_TAG }}
+        run: |
+          export IMAGE_TAG=${{ env.IMAGE_SECONDARY_TAG }}
+          docker compose -f docker-compose.yaml build ${{ matrix.module }}
+          docker images
 
       - name: Save Docker image
         if: github.event_name == 'push' && github.ref_name == 'main'
