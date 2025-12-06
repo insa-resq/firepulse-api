@@ -78,7 +78,7 @@ pipeline {
             steps {
                 script {
                     withCredentials([
-                        string(credentialsId: 'deployment-user', variable: 'DEPLOYMENT_USER')
+                        string(credentialsId: 'deployment-user', variable: 'DEPLOYMENT_USER'),
                         string(credentialsId: 'github-token', variable: 'GITHUB_TOKEN')
                     ]) {
                         def services = env.ORDERED_SERVICES.split(',')
