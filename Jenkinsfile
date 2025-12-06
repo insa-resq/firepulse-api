@@ -11,7 +11,7 @@ pipeline {
 
     environment {
         DEPLOYMENT_SERVER = '192.168.10.46'
-        DEPLOY_PATH = '~/firepulse-api'
+        DEPLOYMENT_DIRECTORY = '~/firepulse-api'
         IMAGE_TAG = 'latest'
         ALL_SERVICES = 'config-service,discovery-service,brigadeflow-service,pyrosense-service,stationlogix-service'
 
@@ -48,27 +48,26 @@ pipeline {
             steps {
                 script {
                     withCredentials([
-                        string(credentialsId: 'deployment-user', variable: 'DEPLOYMENT_USER'),
+                        string(credentialsId: 'ssh-user', variable: 'SSH_USER'),
+                        string(credentialsId: 'ssh-password', variable: 'SSH_PASSWORD'),
                         string(credentialsId: 'database-user', variable: 'DATABASE_USER'),
                         string(credentialsId: 'database-password', variable: 'DATABASE_PASSWORD')
                     ]) {
-                        sshagent(credentials: ['applications-server-ssh']) {
-                            // Create/Override .env file on deployment server
-                            sh """
-                                ssh -o StrictHostKeyChecking=no ${DEPLOYMENT_USER}@${DEPLOYMENT_SERVER} '
-                                    mkdir -p ${DEPLOY_PATH}
-                                    echo "DATABASE_HOST=${DATABASE_HOST}" > ${DEPLOY_PATH}/.env
-                                    echo "DATABASE_NAME=${DATABASE_NAME}" >> ${DEPLOY_PATH}/.env
-                                    echo "DATABASE_USER=${DATABASE_USER}" >> ${DEPLOY_PATH}/.env
-                                    echo "DATABASE_PASSWORD=${DATABASE_PASSWORD}" >> ${DEPLOY_PATH}/.env
-                                    chmod 600 ${DEPLOY_PATH}/.env
-                                '
-                            """
-                            // Transfer docker-compose.yaml
-                            sh """
-                                scp -o StrictHostKeyChecking=no docker-compose.yaml ${DEPLOYMENT_USER}@${DEPLOYMENT_SERVER}:${DEPLOY_PATH}/
-                            """
-                        }
+                        // Create/Override .env file on deployment server
+                        sh """
+                            sshpass -p "${SSH_PASSWORD}" ssh -o StrictHostKeyChecking=no ${SSH_USER}@${DEPLOYMENT_SERVER} '
+                                mkdir -p ${DEPLOYMENT_DIRECTORY}
+                                echo "DATABASE_HOST=${DATABASE_HOST}" > ${DEPLOYMENT_DIRECTORY}/.env
+                                echo "DATABASE_NAME=${DATABASE_NAME}" >> ${DEPLOYMENT_DIRECTORY}/.env
+                                echo "DATABASE_USER=${DATABASE_USER}" >> ${DEPLOYMENT_DIRECTORY}/.env
+                                echo "DATABASE_PASSWORD=${DATABASE_PASSWORD}" >> ${DEPLOYMENT_DIRECTORY}/.env
+                                chmod 600 ${DEPLOYMENT_DIRECTORY}/.env
+                            '
+                        """
+                        // Transfer docker-compose.yaml
+                        sh """
+                            sshpass -p "${SSH_PASSWORD}" scp -o StrictHostKeyChecking=no docker-compose.yaml ${SSH_USER}@${DEPLOYMENT_SERVER}:${DEPLOYMENT_DIRECTORY}/
+                        """
                     }
                 }
             }
@@ -78,59 +77,58 @@ pipeline {
             steps {
                 script {
                     withCredentials([
-                        string(credentialsId: 'deployment-user', variable: 'DEPLOYMENT_USER'),
+                        string(credentialsId: 'ssh-user', variable: 'SSH_USER'),
+                        string(credentialsId: 'ssh-password', variable: 'SSH_PASSWORD'),
                         string(credentialsId: 'github-token', variable: 'GITHUB_TOKEN')
                     ]) {
                         def services = env.ORDERED_SERVICES.split(',')
-                        sshagent(credentials: ['applications-server-ssh']) {
-                            sh """
-                                ssh -o StrictHostKeyChecking=no ${DEPLOYMENT_USER}@${DEPLOYMENT_SERVER} '
-                                    echo "${GITHUB_TOKEN}" | docker login ghcr.io -u "jenkins" --password-stdin
-                                '
-                            """
-                            try {
-                                services.each { service ->
-                                    stage("Deploy ${service}") {
-                                        echo "Deploying ${service}..."
-                                        try {
-                                            // Execute on remote, capture exit status
-                                            def result = sh(
-                                                script: """
-                                                    ssh -o StrictHostKeyChecking=no ${DEPLOYMENT_USER}@${DEPLOYMENT_SERVER} '
-                                                        set -e
-                                                        cd ${DEPLOY_PATH}
-                                                        echo "Pulling updated image for ${service}..."
-                                                        export IMAGE_TAG=${IMAGE_TAG}
-                                                        docker compose pull ${service}
-                                                        echo Starting ${service}..."
-                                                        docker compose up -d ${service} --wait
-                                                        echo "${service} deployed successfully!"
-                                                    '
-                                                """,
-                                                returnStatus: true
-                                            )
+                        sh """
+                            sshpass -p "${SSH_PASSWORD}" ssh -o StrictHostKeyChecking=no ${SSH_USER}@${DEPLOYMENT_SERVER} '
+                                echo "${GITHUB_TOKEN}" | docker login ghcr.io -u "jenkins" --password-stdin
+                            '
+                        """
+                        try {
+                            services.each { service ->
+                                stage("Deploy ${service}") {
+                                    echo "Deploying ${service}..."
+                                    try {
+                                        // Execute on remote, capture exit status
+                                        def result = sh(
+                                            script: """
+                                                sshpass -p "${SSH_PASSWORD}" ssh -o StrictHostKeyChecking=no ${SSH_USER}@${DEPLOYMENT_SERVER} '
+                                                    set -e
+                                                    cd ${DEPLOYMENT_DIRECTORY}
+                                                    echo "Pulling updated image for ${service}..."
+                                                    export IMAGE_TAG=${IMAGE_TAG}
+                                                    docker compose pull ${service}
+                                                    echo Starting ${service}..."
+                                                    docker compose up -d ${service} --wait
+                                                    echo "${service} deployed successfully!"
+                                                '
+                                            """,
+                                            returnStatus: true
+                                        )
 
-                                            if (result != 0) {
-                                                error("Deployment of ${service} failed with exit code ${result}")
-                                            }
-                                        } catch (err) {
-                                            echo "Exception while deploying ${service}: ${err}"
-                                            error("Deployment of ${service} failed")
+                                        if (result != 0) {
+                                            error("Deployment of ${service} failed with exit code ${result}")
                                         }
+                                    } catch (err) {
+                                        echo "Exception while deploying ${service}: ${err}"
+                                        error("Deployment of ${service} failed")
                                     }
                                 }
-                            } catch (err) {
-                                echo "Deployment process encountered an error: ${err}"
-                                error(err.toString())
-                            } finally {
-                                // always attempt to clean up images and logout from registry
-                                sh """
-                                    ssh -o StrictHostKeyChecking=no ${DEPLOYMENT_USER}@${DEPLOYMENT_SERVER} '
-                                        docker image prune -f || true
-                                        docker logout ghcr.io || true
-                                    '
-                                """
                             }
+                        } catch (err) {
+                            echo "Deployment process encountered an error: ${err}"
+                            error(err.toString())
+                        } finally {
+                            // always attempt to clean up images and logout from registry
+                            sh """
+                                sshpass -p "${SSH_PASSWORD}" ssh -o StrictHostKeyChecking=no ${SSH_USER}@${DEPLOYMENT_SERVER} '
+                                    docker image prune -f || true
+                                    docker logout ghcr.io || true
+                                '
+                            """
                         }
                     }
                 }
