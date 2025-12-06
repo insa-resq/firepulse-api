@@ -1,0 +1,52 @@
+name: firepulse-api-services-override
+
+services:
+  config-service:
+    image: firepulse-api-config-service
+    pull_policy: never
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        - SERVICE_NAME=config-service
+
+  discovery-service:
+    image: firepulse-api-discovery-service
+    pull_policy: never
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        - SERVICE_NAME=discovery-service
+
+  brigadeflow-service:
+    image: firepulse-api-brigadeflow-service
+    pull_policy: never
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        - SERVICE_NAME=brigadeflow-service
+
+  pyrosense-service:
+    image: firepulse-api-pyrosense-service
+    pull_policy: never
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        - SERVICE_NAME=pyrosense-service
+
+  stationlogix-service:
+    image: firepulse-api-stationlogix-service
+    pull_policy: never
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        - SERVICE_NAME=stationlogix-service
+
+networks:
+  firepulse_api:
+    name: firepulse_api
+    driver: bridge

@@ -3,15 +3,13 @@ name: firepulse-api-services
 # The `image` and `container_name` fields MUST have the value 'firepulse-api-{service-name}'
 services:
   config-service:
-    image: firepulse-api-config-service
-    pull_policy: never
-    build:
-      context: .
-      dockerfile: Dockerfile
-      args:
-        - SERVICE_NAME=config-service
+    image: ghcr.io/insa-resq/firepulse-api/config-service:${IMAGE_TAG}
+    pull_policy: always
     container_name: firepulse-api-config-service
     restart: always
+    deploy:
+      update_config:
+        failure_action: rollback
     ports:
       - '8000:8080'
     networks:
@@ -25,15 +23,13 @@ services:
       retries: 3
 
   discovery-service:
-    image: firepulse-api-discovery-service
-    pull_policy: never
-    build:
-      context: .
-      dockerfile: Dockerfile
-      args:
-        - SERVICE_NAME=discovery-service
+    image: ghcr.io/insa-resq/firepulse-api/discovery-service:${IMAGE_TAG}
+    pull_policy: always
     container_name: firepulse-api-discovery-service
     restart: always
+    deploy:
+      update_config:
+        failure_action: rollback
     environment:
       - CONFIG_SERVER_URI=http://config-service:8080
     ports:
@@ -52,19 +48,16 @@ services:
         condition: service_healthy
 
   brigadeflow-service:
-    image: firepulse-api-brigadeflow-service
-    pull_policy: never
-    build:
-      context: .
-      dockerfile: Dockerfile
-      args:
-        - SERVICE_NAME=brigadeflow-service
+    image: ghcr.io/insa-resq/firepulse-api/brigadeflow-service:${IMAGE_TAG}
+    pull_policy: always
     container_name: firepulse-api-brigadeflow-service
     restart: always
+    deploy:
+      update_config:
+        failure_action: rollback
     environment:
       - CONFIG_SERVER_URI=http://config-service:8080
       - DATABASE_HOST=${DATABASE_HOST}
-      - DATABASE_PORT=${DATABASE_PORT}
       - DATABASE_NAME=${DATABASE_NAME}
       - DATABASE_USER=${DATABASE_USER}
       - DATABASE_PASSWORD=${DATABASE_PASSWORD}
@@ -86,19 +79,16 @@ services:
         condition: service_healthy
 
   pyrosense-service:
-    image: firepulse-api-pyrosense-service
-    pull_policy: never
-    build:
-      context: .
-      dockerfile: Dockerfile
-      args:
-        - SERVICE_NAME=pyrosense-service
+    image: ghcr.io/insa-resq/firepulse-api/pyrosense-service:${IMAGE_TAG}
+    pull_policy: always
     container_name: firepulse-api-pyrosense-service
     restart: always
+    deploy:
+      update_config:
+        failure_action: rollback
     environment:
       - CONFIG_SERVER_URI=http://config-service:8080
       - DATABASE_HOST=${DATABASE_HOST}
-      - DATABASE_PORT=${DATABASE_PORT}
       - DATABASE_NAME=${DATABASE_NAME}
       - DATABASE_USER=${DATABASE_USER}
       - DATABASE_PASSWORD=${DATABASE_PASSWORD}
@@ -120,19 +110,16 @@ services:
         condition: service_healthy
 
   stationlogix-service:
-    image: firepulse-api-stationlogix-service
-    pull_policy: never
-    build:
-      context: .
-      dockerfile: Dockerfile
-      args:
-        - SERVICE_NAME=stationlogix-service
+    image: ghcr.io/insa-resq/firepulse-api/stationlogix-service:${IMAGE_TAG}
+    pull_policy: always
     container_name: firepulse-api-stationlogix-service
     restart: always
+    deploy:
+      update_config:
+        failure_action: rollback
     environment:
       - CONFIG_SERVER_URI=http://config-service:8080
       - DATABASE_HOST=${DATABASE_HOST}
-      - DATABASE_PORT=${DATABASE_PORT}
       - DATABASE_NAME=${DATABASE_NAME}
       - DATABASE_USER=${DATABASE_USER}
       - DATABASE_PASSWORD=${DATABASE_PASSWORD}
