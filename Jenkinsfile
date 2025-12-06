@@ -15,7 +15,7 @@ pipeline {
         IMAGE_TAG = 'latest'
         ALL_SERVICES = 'config-service,discovery-service,brigadeflow-service,pyrosense-service,stationlogix-service'
 
-        DEPLOYMENT_USER = credentials('deployment-server-ssh')
+        DEPLOYMENT_USER = credentials('applications-server-ssh')
         GITHUB_TOKEN = credentials('github-token')
 
         DATABASE_HOST = '192.168.20.150'
@@ -52,7 +52,7 @@ pipeline {
         stage('Transfer Configuration') {
             steps {
                 script {
-                    sshagent(credentials: ['deployment-server-ssh']) {
+                    sshagent(credentials: ['applications-server-ssh']) {
                         // Create/Override .env file on deployment server
                         sh """
                             ssh -o StrictHostKeyChecking=no ${DEPLOYMENT_USER}@${DEPLOYMENT_SERVER} '
@@ -79,7 +79,7 @@ pipeline {
                 script {
                     def services = env.ORDERED_SERVICES.split(',')
 
-                    sshagent(credentials: ['deployment-server-ssh']) {
+                    sshagent(credentials: ['applications-server-ssh']) {
 
                         sh """
                             ssh -o StrictHostKeyChecking=no ${DEPLOYMENT_USER}@${DEPLOYMENT_SERVER} '

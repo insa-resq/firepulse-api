@@ -167,7 +167,7 @@ jobs:
           docker push ${IMAGE_NAME}:${{ env.IMAGE_PRIMARY_TAG }}
 
   deploy:
-    name: Trigger deployment (${{ matrix.module }})
+    name: Trigger deployment
     needs: [detect-changes, push]
     if: ${{ needs.detect-changes.outputs.changed_services != '[]' && github.event_name == 'push' && github.ref_name == 'main' }}
     runs-on: ubuntu-latest
