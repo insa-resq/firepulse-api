@@ -107,6 +107,7 @@ pipeline {
                                                     cd ${DEPLOY_PATH}
 
                                                     echo "--- Pulling updated image for ${service} ---"
+                                                    export IMAGE_TAG=${IMAGE_TAG}
                                                     docker compose pull ${service}
 
                                                     echo "--- Starting ${service} ---"

@@ -5,6 +5,11 @@ services:
   config-service:
     image: ghcr.io/insa-resq/firepulse-api/config-service:${IMAGE_TAG}
     pull_policy: always
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        - SERVICE_NAME=config-service
     container_name: firepulse-api-config-service
     restart: always
     deploy:
@@ -25,6 +30,11 @@ services:
   discovery-service:
     image: ghcr.io/insa-resq/firepulse-api/discovery-service:${IMAGE_TAG}
     pull_policy: always
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        - SERVICE_NAME=discovery-service
     container_name: firepulse-api-discovery-service
     restart: always
     deploy:
@@ -50,6 +60,11 @@ services:
   brigadeflow-service:
     image: ghcr.io/insa-resq/firepulse-api/brigadeflow-service:${IMAGE_TAG}
     pull_policy: always
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        - SERVICE_NAME=brigadeflow-service
     container_name: firepulse-api-brigadeflow-service
     restart: always
     deploy:
@@ -81,6 +96,11 @@ services:
   pyrosense-service:
     image: ghcr.io/insa-resq/firepulse-api/pyrosense-service:${IMAGE_TAG}
     pull_policy: always
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        - SERVICE_NAME=pyrosense-service
     container_name: firepulse-api-pyrosense-service
     restart: always
     deploy:
@@ -112,6 +132,11 @@ services:
   stationlogix-service:
     image: ghcr.io/insa-resq/firepulse-api/stationlogix-service:${IMAGE_TAG}
     pull_policy: always
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        - SERVICE_NAME=stationlogix-service
     container_name: firepulse-api-stationlogix-service
     restart: always
     deploy:
