@@ -106,11 +106,12 @@ jobs:
         uses: actions/checkout@v6.0.1
 
       - name: Set up environment
-        run: cp .env.ci .env
+        run: |
+          cp .env.ci .env
+          echo "IMAGE_TAG=${{ env.IMAGE_SECONDARY_TAG }}" >> .env
 
       - name: Build the Docker image
         run: |
-          export IMAGE_TAG=${{ env.IMAGE_SECONDARY_TAG }}
           docker compose -f docker-compose.yaml build ${{ matrix.module }}
           docker images
 
