@@ -15,13 +15,8 @@ pipeline {
         IMAGE_TAG = 'latest'
         ALL_SERVICES = 'config-service,discovery-service,brigadeflow-service,pyrosense-service,stationlogix-service'
 
-        DEPLOYMENT_USER = credentials('applications-server-ssh')
-        GITHUB_TOKEN = credentials('github-token')
-
         DATABASE_HOST = '192.168.20.150'
         DATABASE_NAME = 'firepulse_db'
-        DATABASE_USER = credentials('database-user')
-        DATABASE_PASSWORD = credentials('database-password')
     }
 
     stages {
@@ -44,7 +39,7 @@ pipeline {
                     def services = env.SERVICES_TO_DEPLOY.split(',')
                     def orderedServices = calculateDeploymentOrder(services)
                     env.ORDERED_SERVICES = orderedServices.join(',')
-                    echo "Deployment order: ${env.ORDERED_SERVICES}"
+                    echo "Deployment order: ${orderedServices.join(' -> ')}"
                 }
             }
         }
@@ -52,23 +47,28 @@ pipeline {
         stage('Transfer Configuration') {
             steps {
                 script {
-                    sshagent(credentials: ['applications-server-ssh']) {
-                        // Create/Override .env file on deployment server
-                        sh """
-                            ssh -o StrictHostKeyChecking=no ${DEPLOYMENT_USER}@${DEPLOYMENT_SERVER} '
-                                mkdir -p ${DEPLOY_PATH}
-                                echo "DATABASE_HOST=${DATABASE_HOST}" > ${DEPLOY_PATH}/.env
-                                echo "DATABASE_NAME=${DATABASE_NAME}" >> ${DEPLOY_PATH}/.env
-                                echo "DATABASE_USER=${DATABASE_USER}" >> ${DEPLOY_PATH}/.env
-                                echo "DATABASE_PASSWORD=${DATABASE_PASSWORD}" >> ${DEPLOY_PATH}/.env
-                                chmod 600 ${DEPLOY_PATH}/.env
-                            '
-                        """
-
-                        // Transfer docker-compose.yaml
-                        sh """
-                            scp -o StrictHostKeyChecking=no docker-compose.yaml ${DEPLOYMENT_USER}@${DEPLOYMENT_SERVER}:${DEPLOY_PATH}/
-                        """
+                    withCredentials([
+                        string(credentialsId: 'deployment-user', variable: 'DEPLOYMENT_USER'),
+                        string(credentialsId: 'database-user', variable: 'DATABASE_USER'),
+                        string(credentialsId: 'database-password', variable: 'DATABASE_PASSWORD')
+                    ]) {
+                        sshagent(credentials: ['applications-server-ssh']) {
+                            // Create/Override .env file on deployment server
+                            sh """
+                                ssh -o StrictHostKeyChecking=no ${DEPLOYMENT_USER}@${DEPLOYMENT_SERVER} '
+                                    mkdir -p ${DEPLOY_PATH}
+                                    echo "DATABASE_HOST=${DATABASE_HOST}" > ${DEPLOY_PATH}/.env
+                                    echo "DATABASE_NAME=${DATABASE_NAME}" >> ${DEPLOY_PATH}/.env
+                                    echo "DATABASE_USER=${DATABASE_USER}" >> ${DEPLOY_PATH}/.env
+                                    echo "DATABASE_PASSWORD=${DATABASE_PASSWORD}" >> ${DEPLOY_PATH}/.env
+                                    chmod 600 ${DEPLOY_PATH}/.env
+                                '
+                            """
+                            // Transfer docker-compose.yaml
+                            sh """
+                                scp -o StrictHostKeyChecking=no docker-compose.yaml ${DEPLOYMENT_USER}@${DEPLOYMENT_SERVER}:${DEPLOY_PATH}/
+                            """
+                        }
                     }
                 }
             }
@@ -77,62 +77,60 @@ pipeline {
         stage('Deploy Services') {
             steps {
                 script {
-                    def services = env.ORDERED_SERVICES.split(',')
-
-                    sshagent(credentials: ['applications-server-ssh']) {
-
-                        sh """
-                            ssh -o StrictHostKeyChecking=no ${DEPLOYMENT_USER}@${DEPLOYMENT_SERVER} '
-                                echo "${GITHUB_TOKEN}" | docker login ghcr.io -u "jenkins" --password-stdin
-                            '
-                        """
-
-                        try {
-                            services.each { service ->
-                                stage("Deploy ${service}") {
-                                    echo "Deploying ${service}..."
-                                    try {
-                                        // Execute on remote, capture exit status
-                                        def result = sh(
-                                            script: """
-                                                ssh -o StrictHostKeyChecking=no ${DEPLOYMENT_USER}@${DEPLOYMENT_SERVER} '
-                                                    set -e
-
-                                                    cd ${DEPLOY_PATH}
-
-                                                    echo "--- Pulling updated image for ${service} ---"
-                                                    export IMAGE_TAG=${IMAGE_TAG}
-                                                    docker compose pull ${service}
-
-                                                    echo "--- Starting ${service} ---"
-                                                    docker compose up -d ${service} --wait
-
-                                                    echo "--- ${service} deployed successfully ---"
-                                                '
-                                            """,
-                                            returnStatus: true
-                                        )
-
-                                        if (result != 0) {
-                                            error("Deployment of ${service} failed with exit code ${result}")
-                                        }
-                                    } catch (err) {
-                                        echo "Exception while deploying ${service}: ${err}"
-                                        error("Deployment of ${service} failed")
-                                    }
-                                }
-                            }
-                        } catch (err) {
-                            echo "Deployment process encountered an error: ${err}"
-                            error(err.toString())
-                        } finally {
-                            // always attempt to clean up images and logout from registry
+                    withCredentials([
+                        string(credentialsId: 'deployment-user', variable: 'DEPLOYMENT_USER')
+                        string(credentialsId: 'github-token', variable: 'GITHUB_TOKEN')
+                    ]) {
+                        def services = env.ORDERED_SERVICES.split(',')
+                        sshagent(credentials: ['applications-server-ssh']) {
                             sh """
                                 ssh -o StrictHostKeyChecking=no ${DEPLOYMENT_USER}@${DEPLOYMENT_SERVER} '
-                                    docker image prune -f
-                                    docker logout ghcr.io
+                                    echo "${GITHUB_TOKEN}" | docker login ghcr.io -u "jenkins" --password-stdin
                                 '
                             """
+                            try {
+                                services.each { service ->
+                                    stage("Deploy ${service}") {
+                                        echo "Deploying ${service}..."
+                                        try {
+                                            // Execute on remote, capture exit status
+                                            def result = sh(
+                                                script: """
+                                                    ssh -o StrictHostKeyChecking=no ${DEPLOYMENT_USER}@${DEPLOYMENT_SERVER} '
+                                                        set -e
+                                                        cd ${DEPLOY_PATH}
+                                                        echo "Pulling updated image for ${service}..."
+                                                        export IMAGE_TAG=${IMAGE_TAG}
+                                                        docker compose pull ${service}
+                                                        echo Starting ${service}..."
+                                                        docker compose up -d ${service} --wait
+                                                        echo "${service} deployed successfully!"
+                                                    '
+                                                """,
+                                                returnStatus: true
+                                            )
+
+                                            if (result != 0) {
+                                                error("Deployment of ${service} failed with exit code ${result}")
+                                            }
+                                        } catch (err) {
+                                            echo "Exception while deploying ${service}: ${err}"
+                                            error("Deployment of ${service} failed")
+                                        }
+                                    }
+                                }
+                            } catch (err) {
+                                echo "Deployment process encountered an error: ${err}"
+                                error(err.toString())
+                            } finally {
+                                // always attempt to clean up images and logout from registry
+                                sh """
+                                    ssh -o StrictHostKeyChecking=no ${DEPLOYMENT_USER}@${DEPLOYMENT_SERVER} '
+                                        docker image prune -f || true
+                                        docker logout ghcr.io || true
+                                    '
+                                """
+                            }
                         }
                     }
                 }
