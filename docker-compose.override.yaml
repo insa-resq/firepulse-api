@@ -9,16 +9,16 @@ services:
     image: firepulse-api-discovery-service
     pull_policy: never
 
-  brigadeflow-service:
-    image: firepulse-api-brigadeflow-service
+  detection-service:
+    image: firepulse-api-detection-service
     pull_policy: never
 
-  pyrosense-service:
-    image: firepulse-api-pyrosense-service
+  planning-service:
+    image: firepulse-api-planning-service
     pull_policy: never
 
-  stationlogix-service:
-    image: firepulse-api-stationlogix-service
+  registry-service:
+    image: firepulse-api-registry-service
     pull_policy: never
 
 networks:

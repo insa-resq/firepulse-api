@@ -57,51 +57,15 @@ services:
       config-service:
         condition: service_healthy
 
-  brigadeflow-service:
-    image: ghcr.io/insa-resq/firepulse-api/brigadeflow-service:${IMAGE_TAG}
+  detection-service:
+    image: ghcr.io/insa-resq/firepulse-api/detection-service:${IMAGE_TAG}
     pull_policy: always
     build:
       context: .
       dockerfile: Dockerfile
       args:
-        - SERVICE_NAME=brigadeflow-service
-    container_name: firepulse-api-brigadeflow-service
-    restart: always
-    deploy:
-      update_config:
-        failure_action: rollback
-    environment:
-      - CONFIG_SERVER_URI=http://config-service:8080
-      - DATABASE_HOST=${DATABASE_HOST}
-      - DATABASE_NAME=${DATABASE_NAME}
-      - DATABASE_USER=${DATABASE_USER}
-      - DATABASE_PASSWORD=${DATABASE_PASSWORD}
-    ports:
-      - '8002:8080'
-    networks:
-      - firepulse_api
-    healthcheck:
-      test: ["CMD", "wget", "-q", "-O-", "http://localhost:8080/actuator/health"]
-      start_period: 45s
-      start_interval: 5s
-      interval: 30s
-      timeout: 5s
-      retries: 3
-    depends_on:
-      config-service:
-        condition: service_healthy
-      discovery-service:
-        condition: service_healthy
-
-  pyrosense-service:
-    image: ghcr.io/insa-resq/firepulse-api/pyrosense-service:${IMAGE_TAG}
-    pull_policy: always
-    build:
-      context: .
-      dockerfile: Dockerfile
-      args:
-        - SERVICE_NAME=pyrosense-service
-    container_name: firepulse-api-pyrosense-service
+        - SERVICE_NAME=detection-service
+    container_name: firepulse-api-detection-service
     restart: always
     deploy:
       update_config:
@@ -117,7 +81,7 @@ services:
     networks:
       - firepulse_api
     healthcheck:
-      test: ["CMD", "wget", "-q", "-O-", "http://localhost:8080/actuator/health"]
+      test: [ "CMD", "wget", "-q", "-O-", "http://localhost:8080/actuator/health" ]
       start_period: 45s
       start_interval: 5s
       interval: 30s
@@ -129,15 +93,15 @@ services:
       discovery-service:
         condition: service_healthy
 
-  stationlogix-service:
-    image: ghcr.io/insa-resq/firepulse-api/stationlogix-service:${IMAGE_TAG}
+  planning-service:
+    image: ghcr.io/insa-resq/firepulse-api/planning-service:${IMAGE_TAG}
     pull_policy: always
     build:
       context: .
       dockerfile: Dockerfile
       args:
-        - SERVICE_NAME=stationlogix-service
-    container_name: firepulse-api-stationlogix-service
+        - SERVICE_NAME=planning-service
+    container_name: firepulse-api-planning-service
     restart: always
     deploy:
       update_config:
@@ -150,6 +114,42 @@ services:
       - DATABASE_PASSWORD=${DATABASE_PASSWORD}
     ports:
       - '8004:8080'
+    networks:
+      - firepulse_api
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O-", "http://localhost:8080/actuator/health"]
+      start_period: 45s
+      start_interval: 5s
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    depends_on:
+      config-service:
+        condition: service_healthy
+      discovery-service:
+        condition: service_healthy
+
+  registry-service:
+    image: ghcr.io/insa-resq/firepulse-api/registry-service:${IMAGE_TAG}
+    pull_policy: always
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        - SERVICE_NAME=registry-service
+    container_name: firepulse-api-registry-service
+    restart: always
+    deploy:
+      update_config:
+        failure_action: rollback
+    environment:
+      - CONFIG_SERVER_URI=http://config-service:8080
+      - DATABASE_HOST=${DATABASE_HOST}
+      - DATABASE_NAME=${DATABASE_NAME}
+      - DATABASE_USER=${DATABASE_USER}
+      - DATABASE_PASSWORD=${DATABASE_PASSWORD}
+    ports:
+      - '8005:8080'
     networks:
       - firepulse_api
     healthcheck:

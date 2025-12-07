@@ -10,7 +10,7 @@ pipeline {
     }
 
     environment {
-        ALL_SERVICES = 'config-service,discovery-service,brigadeflow-service,pyrosense-service,stationlogix-service'
+        ALL_SERVICES = 'config-service,detection-service,discovery-service,planning-service,registry-service'
 
         DEPLOYMENT_SERVER = '192.168.10.46'
         DEPLOYMENT_DIRECTORY = '~/firepulse-api'
@@ -162,10 +162,10 @@ pipeline {
 def calculateDeploymentOrder(services) {
     def depMap = [
         'config-service': [],
+        'detection-service': ['config-service', 'discovery-service'],
         'discovery-service': ['config-service'],
-        'brigadeflow-service': ['config-service', 'discovery-service'],
-        'pyrosense-service': ['config-service', 'discovery-service'],
-        'stationlogix-service': ['config-service', 'discovery-service']
+        'planning-service': ['config-service', 'discovery-service']
+        'registry-service': ['config-service', 'discovery-service'],
     ]
 
     def allServices = services as List

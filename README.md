@@ -26,6 +26,6 @@
 
 - Config service: [http://localhost:8000/actuator/default](http://localhost:8000/actuator/default)
 - Discovery service: [http://localhost:8001](http://localhost:8001)
-- BrigadeFlow service: [http://localhost:8002](http://localhost:8002/docs/ui.html)
-- PyroSense service: [http://localhost:8003](http://localhost:8003/docs/ui.html)
-- StationLogix service: [http://localhost:8004](http://localhost:8004/docs/ui.html)
+- Detection service: [http://localhost:8003](http://localhost:8003/docs/ui.html)
+- Planning service: [http://localhost:8004](http://localhost:8004/docs/ui.html)
+- Registry service: [http://localhost:8005](http://localhost:8005/docs/ui.html)

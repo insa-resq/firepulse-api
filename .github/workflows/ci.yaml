@@ -41,26 +41,26 @@ jobs:
               - Dockerfile
               - docker-compose.yaml
               - .github/workflows/ci.yaml
-            brigadeflow-service:
-              - 'brigadeflow-service/**'
             config-service:
               - 'config-service/**'
+            detection-service:
+              - 'detection-service/**'
             discovery-service:
               - 'discovery-service/**'
-            pyrosense-service:
-              - 'pyrosense-service/**'
-            stationlogix-service:
-              - 'stationlogix-service/**'
+            planning-service:
+              - 'planning-service/**'
+            registry-service:
+              - 'registry-service/**'
 
       - name: Set changed services output
         id: changes
         run: |
           changed_services=()
-          if [ "${{ steps.filter.outputs.all-services }}" = 'true' ] || [ "${{ steps.filter.outputs.brigadeflow-service }}" = 'true' ]; then changed_services+=("brigadeflow-service"); fi
           if [ "${{ steps.filter.outputs.all-services }}" = 'true' ] || [ "${{ steps.filter.outputs.config-service }}" = 'true' ]; then changed_services+=("config-service"); fi
+          if [ "${{ steps.filter.outputs.all-services }}" = 'true' ] || [ "${{ steps.filter.outputs.detection-service }}" = 'true' ]; then changed_services+=("detection-service"); fi
           if [ "${{ steps.filter.outputs.all-services }}" = 'true' ] || [ "${{ steps.filter.outputs.discovery-service }}" = 'true' ]; then changed_services+=("discovery-service"); fi
-          if [ "${{ steps.filter.outputs.all-services }}" = 'true' ] || [ "${{ steps.filter.outputs.pyrosense-service }}" = 'true' ]; then changed_services+=("pyrosense-service"); fi
-          if [ "${{ steps.filter.outputs.all-services }}" = 'true' ] || [ "${{ steps.filter.outputs.stationlogix-service }}" = 'true' ]; then changed_services+=("stationlogix-service"); fi
+          if [ "${{ steps.filter.outputs.all-services }}" = 'true' ] || [ "${{ steps.filter.outputs.planning-service }}" = 'true' ]; then changed_services+=("planning-service"); fi
+          if [ "${{ steps.filter.outputs.all-services }}" = 'true' ] || [ "${{ steps.filter.outputs.registry-service }}" = 'true' ]; then changed_services+=("registry-service"); fi
           if [ ${#changed_services[@]} -eq 0 ]; then
             echo "No services changed."
             echo "changed_services=[]" >> $GITHUB_OUTPUT
@@ -84,8 +84,7 @@ jobs:
   test:
     name: Run tests (${{ matrix.module }})
     needs: detect-changes
-    # run tests only when a service changed AND deploy_only is false
-    if: ${{ needs.detect-changes.outputs.any_change == 'true' && needs.detect-changes.outputs.deploy_only == 'false' }}
+    if: ${{ needs.detect-changes.outputs.any_change == 'true' }}
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -109,8 +108,6 @@ jobs:
   build:
     name: Build image (${{ matrix.module }})
     needs: [detect-changes, test]
-    # build only when tests ran and were successful, AND we're not in deploy-only mode
-    if: ${{ needs.test.result == 'success' && needs.detect-changes.outputs.deploy_only == 'false' }}
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -131,11 +128,11 @@ jobs:
           docker images
 
       - name: Save Docker image
-        if: github.event_name == 'push' && github.ref_name == 'main'
+        if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
         run: docker save ${{ env.IMAGE_NAME_PREFIX }}/${{ matrix.module }}:${{ env.IMAGE_SECONDARY_TAG }} -o ${{ runner.temp }}/${{ matrix.module }}.tar
 
       - name: Upload the image artifact to GitHub Actions
-        if: github.event_name == 'push' && github.ref_name == 'main'
+        if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
         uses: actions/upload-artifact@v5
         with:
           name: ${{ matrix.module }}-docker-image
@@ -149,8 +146,7 @@ jobs:
   push:
     name: Push image (${{ matrix.module }})
     needs: [detect-changes, build]
-    # push only after a successful build AND only on a push to main, AND not deploy-only
-    if: ${{ github.event_name == 'push' && github.ref_name == 'main' && needs.build.result == 'success' && needs.detect-changes.outputs.deploy_only == 'false' }}
+    if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -186,8 +182,7 @@ jobs:
   deploy:
     name: Trigger deployment
     needs: [detect-changes, push]
-    # deploy when push completed successfully (normal flow) OR detect-changes indicated deploy_only
-    if: ${{ needs.push.result == 'success' || needs.detect-changes.outputs.deploy_only == 'true' }}
+    if: ${{ always() && needs.detect-changes.result == 'success' && (needs.push.result == 'success' || needs.detect-changes.outputs.deploy_only == 'true') }}
     runs-on: ubuntu-latest
     steps:
       - name: Trigger Jenkins deployment via webhook
@@ -198,6 +193,6 @@ jobs:
           else
             SERVICES_TO_DEPLOY=${{ join(fromJson(needs.detect-changes.outputs.changed_services), ',') }}
           fi
-          curl -f -X POST "${{ secrets.JENKINS_URL }}/job/firepulse-api-deployment/buildWithParameters" \
+          curl -X POST "${{ secrets.JENKINS_URL }}/job/firepulse-api-deployment/buildWithParameters" \
             --user "${{ secrets.JENKINS_USER }}:${{ secrets.JENKINS_TOKEN }}" \
             --data-urlencode "SERVICES=$SERVICES_TO_DEPLOY"
