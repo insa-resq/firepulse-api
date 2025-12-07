@@ -10,7 +10,7 @@ pipeline {
     }
 
     environment {
-        ALL_SERVICES = 'config-service,detection-service,discovery-service,planning-service,registry-service'
+        ALL_SERVICES = 'accounts-service,config-service,detection-service,discovery-service,gateway-service,planning-service,registry-service'
 
         DEPLOYMENT_SERVER = '192.168.10.46'
         DEPLOYMENT_DIRECTORY = '~/firepulse-api'
@@ -53,6 +53,7 @@ pipeline {
                         string(credentialsId: 'ssh-password', variable: 'SSH_PASSWORD'),
                         string(credentialsId: 'database-user', variable: 'DATABASE_USER'),
                         string(credentialsId: 'database-password', variable: 'DATABASE_PASSWORD')
+                        string(credentialsId: 'jwt-secret', variable: 'JWT_SECRET')
                     ]) {
                         // Create/Override .env file on deployment server
                         sh """
@@ -62,6 +63,7 @@ pipeline {
                                 echo "DATABASE_NAME=${DATABASE_NAME}" >> ${DEPLOYMENT_DIRECTORY}/.env
                                 echo "DATABASE_USER=${DATABASE_USER}" >> ${DEPLOYMENT_DIRECTORY}/.env
                                 echo "DATABASE_PASSWORD=${DATABASE_PASSWORD}" >> ${DEPLOYMENT_DIRECTORY}/.env
+                                echo "JWT_SECRET=${JWT_SECRET}" >> ${DEPLOYMENT_DIRECTORY}/.env
                                 echo "IMAGE_TAG=${IMAGE_TAG}" >> ${DEPLOYMENT_DIRECTORY}/.env
                                 chmod 600 ${DEPLOYMENT_DIRECTORY}/.env
                             '
@@ -161,9 +163,11 @@ pipeline {
 // Helper function to calculate deployment order based on dependencies
 def calculateDeploymentOrder(services) {
     def depMap = [
+        'accounts-service': ['config-service', 'discovery-service'],
         'config-service': [],
         'discovery-service': ['config-service'],
         'detection-service': ['config-service', 'discovery-service'],
+        'gateway-service': ['config-service', 'discovery-service'],
         'planning-service': ['config-service', 'discovery-service'],
         'registry-service': ['config-service', 'discovery-service'],
     ]

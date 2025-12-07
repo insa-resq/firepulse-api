@@ -1,6 +1,10 @@
 name: firepulse-api-services-override
 
 services:
+  accounts-service:
+    image: firepulse-api-accounts-service
+    pull_policy: never
+
   config-service:
     image: firepulse-api-config-service
     pull_policy: never
@@ -11,6 +15,10 @@ services:
 
   detection-service:
     image: firepulse-api-detection-service
+    pull_policy: never
+
+  gateway-service:
+    image: firepulse-api-gateway-service
     pull_policy: never
 
   planning-service:

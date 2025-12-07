@@ -61,6 +61,14 @@
             <version>${springdoc-openapi.version}</version>
         </dependency>
         <dependency>
+            <groupId>org.hibernate.validator</groupId>
+            <artifactId>hibernate-validator</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.github.ben-manes.caffeine</groupId>
+            <artifactId>caffeine</artifactId>
+        </dependency>
+        <dependency>
             <groupId>com.h2database</groupId>
             <artifactId>h2</artifactId>
             <scope>test</scope>
@@ -130,7 +138,9 @@
                     </dependency>
                 </dependencies>
                 <configuration>
-                    <argLine>-javaagent:${settings.localRepository}/net/bytebuddy/byte-buddy-agent/${bytebuddy.version}/byte-buddy-agent-${bytebuddy.version}.jar</argLine>
+                    <argLine>
+                        -javaagent:${settings.localRepository}/net/bytebuddy/byte-buddy-agent/${bytebuddy.version}/byte-buddy-agent-${bytebuddy.version}.jar
+                    </argLine>
                 </configuration>
             </plugin>
         </plugins>

@@ -41,12 +41,16 @@ jobs:
               - Dockerfile
               - docker-compose.yaml
               - .github/workflows/ci.yaml
+            accounts-service:
+              - 'accounts-service/**'
             config-service:
               - 'config-service/**'
             detection-service:
               - 'detection-service/**'
             discovery-service:
               - 'discovery-service/**'
+            gateway-service:
+              - 'gateway-service/**'
             planning-service:
               - 'planning-service/**'
             registry-service:
@@ -56,9 +60,11 @@ jobs:
         id: changes
         run: |
           changed_services=()
+          if [ "${{ steps.filter.outputs.all-services }}" = 'true' ] || [ "${{ steps.filter.outputs.accounts-service }}" = 'true' ]; then changed_services+=("accounts-service"); fi
           if [ "${{ steps.filter.outputs.all-services }}" = 'true' ] || [ "${{ steps.filter.outputs.config-service }}" = 'true' ]; then changed_services+=("config-service"); fi
           if [ "${{ steps.filter.outputs.all-services }}" = 'true' ] || [ "${{ steps.filter.outputs.detection-service }}" = 'true' ]; then changed_services+=("detection-service"); fi
           if [ "${{ steps.filter.outputs.all-services }}" = 'true' ] || [ "${{ steps.filter.outputs.discovery-service }}" = 'true' ]; then changed_services+=("discovery-service"); fi
+          if [ "${{ steps.filter.outputs.all-services }}" = 'true' ] || [ "${{ steps.filter.outputs.gateway-service }}" = 'true' ]; then changed_services+=("gateway-service"); fi
           if [ "${{ steps.filter.outputs.all-services }}" = 'true' ] || [ "${{ steps.filter.outputs.planning-service }}" = 'true' ]; then changed_services+=("planning-service"); fi
           if [ "${{ steps.filter.outputs.all-services }}" = 'true' ] || [ "${{ steps.filter.outputs.registry-service }}" = 'true' ]; then changed_services+=("registry-service"); fi
           if [ ${#changed_services[@]} -eq 0 ]; then
