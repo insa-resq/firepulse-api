@@ -24,6 +24,7 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       changed_services: ${{ steps.changes.outputs.changed_services }}
+      deploy_only: ${{ steps.changes.outputs.deploy_only }}
     steps:
       - name: Checkout
         uses: actions/checkout@v6.0.1
@@ -33,11 +34,12 @@ jobs:
         uses: dorny/paths-filter@v3
         with:
           filters: |
-            all:
+            cd-pipeline:
+              - Jenkinsfile
+            all-services:
               - Dockerfile
               - docker-compose.yaml
               - .github/workflows/ci.yaml
-              - Jenkinsfile
             brigadeflow-service:
               - 'brigadeflow-service/**'
             config-service:
@@ -53,25 +55,36 @@ jobs:
         id: changes
         run: |
           changed_services=()
-          if [ "${{ steps.filter.outputs.all }}" = 'true' ] || [ "${{ steps.filter.outputs.brigadeflow-service }}" = 'true' ]; then changed_services+=("brigadeflow-service"); fi
-          if [ "${{ steps.filter.outputs.all }}" = 'true' ] || [ "${{ steps.filter.outputs.config-service }}" = 'true' ]; then changed_services+=("config-service"); fi
-          if [ "${{ steps.filter.outputs.all }}" = 'true' ] || [ "${{ steps.filter.outputs.discovery-service }}" = 'true' ]; then changed_services+=("discovery-service"); fi
-          if [ "${{ steps.filter.outputs.all }}" = 'true' ] || [ "${{ steps.filter.outputs.pyrosense-service }}" = 'true' ]; then changed_services+=("pyrosense-service"); fi
-          if [ "${{ steps.filter.outputs.all }}" = 'true' ] || [ "${{ steps.filter.outputs.stationlogix-service }}" = 'true' ]; then changed_services+=("stationlogix-service"); fi
+          if [ "${{ steps.filter.outputs.all-services }}" = 'true' ] || [ "${{ steps.filter.outputs.brigadeflow-service }}" = 'true' ]; then changed_services+=("brigadeflow-service"); fi
+          if [ "${{ steps.filter.outputs.all-services }}" = 'true' ] || [ "${{ steps.filter.outputs.config-service }}" = 'true' ]; then changed_services+=("config-service"); fi
+          if [ "${{ steps.filter.outputs.all-services }}" = 'true' ] || [ "${{ steps.filter.outputs.discovery-service }}" = 'true' ]; then changed_services+=("discovery-service"); fi
+          if [ "${{ steps.filter.outputs.all-services }}" = 'true' ] || [ "${{ steps.filter.outputs.pyrosense-service }}" = 'true' ]; then changed_services+=("pyrosense-service"); fi
+          if [ "${{ steps.filter.outputs.all-services }}" = 'true' ] || [ "${{ steps.filter.outputs.stationlogix-service }}" = 'true' ]; then changed_services+=("stationlogix-service"); fi
           if [ ${#changed_services[@]} -eq 0 ]; then
             echo "No services changed."
             echo "changed_services=[]" >> $GITHUB_OUTPUT
+            echo "any_change=false" >> $GITHUB_OUTPUT
+            if [ "${{ steps.filter.outputs.cd-pipeline }}" = 'true' ]; then
+              echo "CD pipeline changed, triggering deployment."
+              echo "deploy_only=true" >> $GITHUB_OUTPUT
+            else
+              echo "CD pipeline not changed, no deployment."
+              echo "deploy_only=false" >> $GITHUB_OUTPUT
+            fi
           else
             echo "Changed services: ${changed_services[*]}"
             services_json=$(printf '"%s",' "${changed_services[@]}")
             services_json="[${services_json%,}]"
             echo "changed_services=$services_json" >> $GITHUB_OUTPUT
+            echo "any_change=true" >> $GITHUB_OUTPUT
+            echo "deploy_only=false" >> $GITHUB_OUTPUT
           fi
 
   test:
     name: Run tests (${{ matrix.module }})
     needs: detect-changes
-    if: ${{ needs.detect-changes.outputs.changed_services != '[]' }}
+    # run tests only when a service changed AND deploy_only is false
+    if: ${{ needs.detect-changes.outputs.any_change == 'true' && needs.detect-changes.outputs.deploy_only == 'false' }}
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -95,7 +108,8 @@ jobs:
   build:
     name: Build image (${{ matrix.module }})
     needs: [detect-changes, test]
-    if: ${{ needs.detect-changes.outputs.changed_services != '[]' }}
+    # build only when tests ran and were successful, AND we're not in deploy-only mode
+    if: ${{ needs.test.result == 'success' && needs.detect-changes.outputs.deploy_only == 'false' }}
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -134,7 +148,8 @@ jobs:
   push:
     name: Push image (${{ matrix.module }})
     needs: [detect-changes, build]
-    if: ${{ needs.detect-changes.outputs.changed_services != '[]' && github.event_name == 'push' && github.ref_name == 'main' }}
+    # push only after a successful build AND only on a push to main, AND not deploy-only
+    if: ${{ github.event_name == 'push' && github.ref_name == 'main' && needs.build.result == 'success' && needs.detect-changes.outputs.deploy_only == 'false' }}
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -170,11 +185,18 @@ jobs:
   deploy:
     name: Trigger deployment
     needs: [detect-changes, push]
-    if: ${{ needs.detect-changes.outputs.changed_services != '[]' && github.event_name == 'push' && github.ref_name == 'main' }}
+    # deploy when push completed successfully (normal flow) OR detect-changes indicated deploy_only
+    if: ${{ needs.push.result == 'success' || needs.detect-changes.outputs.deploy_only == 'true' }}
     runs-on: ubuntu-latest
     steps:
       - name: Trigger Jenkins deployment via webhook
         run: |
-          curl -X POST "${{ secrets.JENKINS_URL }}/job/firepulse-api-deployment/buildWithParameters" \
+          SERVICES_TO_DEPLOY=""
+          if [ "${{ needs.detect-changes.outputs.deploy_only }}" = 'true' ]; then
+            SERVICES_TO_DEPLOY=ALL
+          else
+            SERVICES_TO_DEPLOY=${{ join(fromJson(needs.detect-changes.outputs.changed_services), ',') }}
+          fi
+          curl -f -X POST "${{ secrets.JENKINS_URL }}/job/firepulse-api-deployment/buildWithParameters" \
             --user "${{ secrets.JENKINS_USER }}:${{ secrets.JENKINS_TOKEN }}" \
-            --data-urlencode "SERVICES=${{ join(fromJson(needs.detect-changes.outputs.changed_services), ',') }}" \
+            --data-urlencode "SERVICES=$SERVICES_TO_DEPLOY"
