@@ -24,6 +24,7 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       changed_services: ${{ steps.changes.outputs.changed_services }}
+      any_change: ${{ steps.changes.outputs.any_change }}
       deploy_only: ${{ steps.changes.outputs.deploy_only }}
     steps:
       - name: Checkout
