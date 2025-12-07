@@ -162,25 +162,17 @@ pipeline {
 def calculateDeploymentOrder(services) {
     def depMap = [
         'config-service': [],
-        'detection-service': ['config-service', 'discovery-service'],
         'discovery-service': ['config-service'],
-        'planning-service': ['config-service', 'discovery-service']
+        'detection-service': ['config-service', 'discovery-service'],
+        'planning-service': ['config-service', 'discovery-service'],
         'registry-service': ['config-service', 'discovery-service'],
     ]
 
     def allServices = services as List
     def ordered = []
 
-    // Add dependencies of selected services
-    def servicesToInclude = allServices.clone()
-    for (service in allServices) {
-        if (depMap.containsKey(service)) {
-            servicesToInclude.addAll(depMap[service])
-        }
-    }
-    servicesToInclude = servicesToInclude.unique()
+    def servicesToInclude = allServices.clone().unique()
 
-    // Sort by dependency order
     def maxIterations = 10
     def iteration = 0
 
@@ -190,6 +182,7 @@ def calculateDeploymentOrder(services) {
 
         for (service in servicesToInclude.clone()) {
             def deps = depMap[service] ?: []
+
             def depsInServices = deps.findAll { servicesToInclude.contains(it) }
 
             if (depsInServices.isEmpty() || depsInServices.every { ordered.contains(it) }) {
@@ -200,7 +193,6 @@ def calculateDeploymentOrder(services) {
         }
 
         if (!added && !servicesToInclude.isEmpty()) {
-            // Circular dependency or missing service - add remaining in order
             ordered.addAll(servicesToInclude)
             break
         }
