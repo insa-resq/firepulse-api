@@ -52,7 +52,7 @@ pipeline {
                         string(credentialsId: 'ssh-user', variable: 'SSH_USER'),
                         string(credentialsId: 'ssh-password', variable: 'SSH_PASSWORD'),
                         string(credentialsId: 'database-user', variable: 'DATABASE_USER'),
-                        string(credentialsId: 'database-password', variable: 'DATABASE_PASSWORD')
+                        string(credentialsId: 'database-password', variable: 'DATABASE_PASSWORD'),
                         string(credentialsId: 'jwt-secret', variable: 'JWT_SECRET')
                     ]) {
                         // Create/Override .env file on deployment server
