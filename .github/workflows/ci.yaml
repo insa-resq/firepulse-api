@@ -197,7 +197,7 @@ jobs:
           if [ "${{ needs.detect-changes.outputs.deploy_only }}" = 'true' ]; then
             SERVICES_TO_DEPLOY=ALL
           else
-            SERVICES_TO_DEPLOY=${{ join(fromJson(needs.detect-changes.outputs.changed_services), ',') }}
+            SERVICES_TO_DEPLOY=${{ join(fromJson(needs.detect-changes.outputs.changed_services),',') }}
           fi
           curl -X POST "${{ secrets.JENKINS_URL }}/job/firepulse-api-deployment/buildWithParameters" \
             --user "${{ secrets.JENKINS_USER }}:${{ secrets.JENKINS_TOKEN }}" \
