@@ -1,5 +1,6 @@
 package org.resq.firepulseapi.accountsservice.exceptions;
 
+import feign.FeignException;
 import org.jspecify.annotations.NonNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -81,6 +82,17 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
                 "An internal server error occurred."
         );
         problemDetail.setTitle("Internal Server Error");
+        return problemDetail;
+    }
+
+    @ExceptionHandler(FeignException.class)
+    public ProblemDetail handleGeneralFeign(FeignException exception) {
+        logger.error("External service error [{}]: {}", exception.status(), exception.contentUTF8());
+        ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(
+                HttpStatus.BAD_GATEWAY,
+                "An unexpected error occurred while communicating with an external service."
+        );
+        problemDetail.setTitle("External Service Error");
         return problemDetail;
     }
 }

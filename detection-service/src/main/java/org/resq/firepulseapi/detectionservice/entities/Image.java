@@ -1,7 +1,7 @@
 package org.resq.firepulseapi.detectionservice.entities;
 
+import io.github.thibaultmeyer.cuid.CUID;
 import jakarta.persistence.*;
-import jakarta.validation.constraints.NotNull;
 import lombok.*;
 import org.hibernate.annotations.ColumnDefault;
 import org.hibernate.annotations.JdbcTypeCode;
@@ -25,36 +25,30 @@ import java.util.Set;
 })
 public class Image {
     @Id
-    @Column(name = "id", nullable = false, length = Integer.MAX_VALUE)
-    private String id;
+    @Column(name = "id", nullable = false, updatable = false, length = Integer.MAX_VALUE)
+    private String id = String.valueOf(CUID.randomCUID2());
 
-    @NotNull
     @ColumnDefault("CURRENT_TIMESTAMP")
-    @Column(name = "\"createdAt\"", nullable = false)
+    @Column(name = "\"createdAt\"", nullable = false, updatable = false)
     private Instant createdAt;
 
-    @NotNull
     @Column(name = "\"updatedAt\"", nullable = false)
     private Instant updatedAt;
 
-    @NotNull
     @Column(name = "url", nullable = false, length = Integer.MAX_VALUE)
     private String url;
 
-    @NotNull
     @Column(name = "width", nullable = false)
     private Integer width;
 
-    @NotNull
     @Column(name = "height", nullable = false)
     private Integer height;
 
-    @NotNull
     @Enumerated(EnumType.STRING)
-    @Column(name = "split", nullable = false)
+    @JdbcTypeCode(SqlTypes.NAMED_ENUM)
+    @Column(name = "split", columnDefinition = "detection.\"ImageSplit\"", nullable = false)
     private ImageSplit split;
 
-    @NotNull
     @ColumnDefault("'{}'")
     @Column(name = "metadata", nullable = false)
     @JdbcTypeCode(SqlTypes.JSON)

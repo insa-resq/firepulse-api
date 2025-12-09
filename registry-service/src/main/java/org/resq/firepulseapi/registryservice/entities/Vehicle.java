@@ -1,14 +1,14 @@
 package org.resq.firepulseapi.registryservice.entities;
 
+import io.github.thibaultmeyer.cuid.CUID;
 import jakarta.persistence.*;
-import jakarta.validation.constraints.NotNull;
 import lombok.*;
-import org.hibernate.annotations.ColumnDefault;
-import org.hibernate.annotations.OnDelete;
-import org.hibernate.annotations.OnDeleteAction;
+import org.hibernate.annotations.*;
+import org.hibernate.type.SqlTypes;
 import org.resq.firepulseapi.registryservice.entities.enums.VehicleType;
 
 import java.time.Instant;
+import java.util.Map;
 
 @AllArgsConstructor
 @NoArgsConstructor
@@ -22,32 +22,34 @@ import java.time.Instant;
 })
 public class Vehicle {
     @Id
-    @Column(name = "id", nullable = false, length = Integer.MAX_VALUE)
-    private String id;
+    @Column(name = "id", nullable = false, updatable = false, length = Integer.MAX_VALUE)
+    private String id = String.valueOf(CUID.randomCUID2());
 
-    @NotNull
+    @CreationTimestamp
     @ColumnDefault("CURRENT_TIMESTAMP")
-    @Column(name = "\"createdAt\"", nullable = false)
+    @Column(name = "\"createdAt\"", nullable = false, updatable = false)
     private Instant createdAt;
 
-    @NotNull
+    @UpdateTimestamp
     @Column(name = "\"updatedAt\"", nullable = false)
     private Instant updatedAt;
 
-    @NotNull
     @Enumerated(EnumType.STRING)
-    @Column(name = "type", nullable = false)
+    @JdbcTypeCode(SqlTypes.NAMED_ENUM)
+    @Column(name = "type", columnDefinition = "registry.\"VehicleType\"", nullable = false)
     private VehicleType type;
 
-    @NotNull
     @Column(name = "\"totalCount\"", nullable = false)
     private Integer totalCount;
 
-    @NotNull
     @Column(name = "\"availableCount\"", nullable = false)
     private Integer availableCount;
 
-    @NotNull
+    @ColumnDefault("'{}'")
+    @Column(name = "metadata", nullable = false)
+    @JdbcTypeCode(SqlTypes.JSON)
+    private Map<String, Object> metadata;
+
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @OnDelete(action = OnDeleteAction.CASCADE)
     @JoinColumn(name = "\"stationId\"", nullable = false)

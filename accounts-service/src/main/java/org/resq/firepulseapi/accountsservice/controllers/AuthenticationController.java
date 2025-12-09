@@ -1,5 +1,7 @@
 package org.resq.firepulseapi.accountsservice.controllers;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.jspecify.annotations.NonNull;
 import org.resq.firepulseapi.accountsservice.dtos.*;
@@ -18,6 +20,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/auth")
+@Tag(name = "Authentication Controller", description = "Endpoints for user authentication")
 public class AuthenticationController {
     private final UserService userService;
     private final AuthenticationManager authenticationManager;
@@ -35,33 +38,38 @@ public class AuthenticationController {
 
     @PostMapping("/register/admin")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<@NonNull UserProfileDto> registerAdmin(@Valid @RequestBody UserCreationDto userCreationDto) {
-        UserProfileDto userProfileDto = userService.createUser(userCreationDto, UserRole.ADMIN);
-        return ResponseEntity.ok(userProfileDto);
+    @Operation(summary = "Register a new admin")
+    public ResponseEntity<@NonNull UserDto> registerAdmin(@Valid @RequestBody UserCreationDto userCreationDto) {
+        UserDto userDto = userService.createUser(userCreationDto, UserRole.ADMIN);
+        return ResponseEntity.ok(userDto);
     }
 
     @PostMapping("/register/alert-monitor")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<@NonNull UserProfileDto> registerAlertMonitor(@Valid @RequestBody UserCreationDto userCreationDto) {
-        UserProfileDto userProfileDto = userService.createUser(userCreationDto, UserRole.ALERT_MONITOR);
-        return ResponseEntity.ok(userProfileDto);
+    @Operation(summary = "Register a new alert monitor")
+    public ResponseEntity<@NonNull UserDto> registerAlertMonitor(@Valid @RequestBody UserCreationDto userCreationDto) {
+        UserDto userDto = userService.createUser(userCreationDto, UserRole.ALERT_MONITOR);
+        return ResponseEntity.ok(userDto);
     }
 
     @PostMapping("/register/planning-manager")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<@NonNull UserProfileDto> registerPlanningManager(@Valid @RequestBody UserCreationDto userCreationDto) {
-        UserProfileDto userProfileDto = userService.createUser(userCreationDto, UserRole.PLANNING_MANAGER);
-        return ResponseEntity.ok(userProfileDto);
+    @Operation(summary = "Register a new planning manager")
+    public ResponseEntity<@NonNull UserDto> registerPlanningManager(@Valid @RequestBody UserCreationDto userCreationDto) {
+        UserDto userDto = userService.createUser(userCreationDto, UserRole.PLANNING_MANAGER);
+        return ResponseEntity.ok(userDto);
     }
 
     @PostMapping("/register/firefighter")
     @PreAuthorize("hasRole('ADMIN') or hasRole('PLANNING_MANAGER')")
-    public ResponseEntity<@NonNull UserProfileDto> registerFirefighter(@Valid @RequestBody UserCreationDto userCreationDto) {
-        UserProfileDto userProfileDto = userService.createUser(userCreationDto, UserRole.FIREFIGHTER);
-        return ResponseEntity.ok(userProfileDto);
+    @Operation(summary = "Register a new firefighter")
+    public ResponseEntity<@NonNull UserDto> registerFirefighter(@Valid @RequestBody UserCreationDto userCreationDto) {
+        UserDto userDto = userService.createUser(userCreationDto, UserRole.FIREFIGHTER);
+        return ResponseEntity.ok(userDto);
     }
 
     @PostMapping("/login")
+    @Operation(summary = "Log in and obtain an authentication token")
     public ResponseEntity<@NonNull TokenDto> login(@Valid @RequestBody LoginDto loginDto) {
         Authentication authentication = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(loginDto.getEmail(), loginDto.getPassword())

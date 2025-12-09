@@ -1,11 +1,13 @@
 package org.resq.firepulseapi.planningservice.entities;
 
+import io.github.thibaultmeyer.cuid.CUID;
 import jakarta.persistence.*;
-import jakarta.validation.constraints.NotNull;
 import lombok.*;
 import org.hibernate.annotations.ColumnDefault;
+import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.annotations.OnDelete;
 import org.hibernate.annotations.OnDeleteAction;
+import org.hibernate.type.SqlTypes;
 import org.resq.firepulseapi.planningservice.entities.enums.Weekday;
 
 import java.time.Instant;
@@ -22,36 +24,30 @@ import java.time.Instant;
 })
 public class AvailabilitySlot {
     @Id
-    @Column(name = "id", nullable = false, length = Integer.MAX_VALUE)
-    private String id;
+    @Column(name = "id", nullable = false, updatable = false, length = Integer.MAX_VALUE)
+    private String id = String.valueOf(CUID.randomCUID2());
 
-    @NotNull
     @ColumnDefault("CURRENT_TIMESTAMP")
-    @Column(name = "\"createdAt\"", nullable = false)
+    @Column(name = "\"createdAt\"", nullable = false, updatable = false)
     private Instant createdAt;
 
-    @NotNull
     @Column(name = "\"updatedAt\"", nullable = false)
     private Instant updatedAt;
 
-    @NotNull
     @Column(name = "year", nullable = false)
     private Integer year;
 
-    @NotNull
     @Column(name = "\"weekNumber\"", nullable = false)
     private Integer weekNumber;
 
-    @NotNull
     @Enumerated(EnumType.STRING)
-    @Column(name = "weekday", nullable = false)
+    @JdbcTypeCode(SqlTypes.NAMED_ENUM)
+    @Column(name = "weekday", columnDefinition = "planning.\"Weekday\"", nullable = false)
     private Weekday weekday;
 
-    @NotNull
     @Column(name = "\"isAvailable\"", nullable = false)
     private Boolean isAvailable = false;
 
-    @NotNull
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @OnDelete(action = OnDeleteAction.CASCADE)
     @JoinColumn(name = "\"firefighterId\"", nullable = false)

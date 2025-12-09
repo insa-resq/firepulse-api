@@ -1,7 +1,7 @@
 package org.resq.firepulseapi.planningservice.entities;
 
+import io.github.thibaultmeyer.cuid.CUID;
 import jakarta.persistence.*;
-import jakarta.validation.constraints.NotNull;
 import lombok.*;
 import org.hibernate.annotations.ColumnDefault;
 import org.hibernate.annotations.OnDelete;
@@ -22,27 +22,22 @@ import java.util.Set;
 })
 public class Planning {
     @Id
-    @Column(name = "id", nullable = false, length = Integer.MAX_VALUE)
-    private String id;
+    @Column(name = "id", nullable = false, updatable = false, length = Integer.MAX_VALUE)
+    private String id = String.valueOf(CUID.randomCUID2());
 
-    @NotNull
     @ColumnDefault("CURRENT_TIMESTAMP")
-    @Column(name = "\"createdAt\"", nullable = false)
+    @Column(name = "\"createdAt\"", nullable = false, updatable = false)
     private Instant createdAt;
 
-    @NotNull
     @Column(name = "\"updatedAt\"", nullable = false)
     private Instant updatedAt;
 
-    @NotNull
     @Column(name = "year", nullable = false)
     private Integer year;
 
-    @NotNull
     @Column(name = "\"weekNumber\"", nullable = false)
     private Integer weekNumber;
 
-    @NotNull
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @OnDelete(action = OnDeleteAction.CASCADE)
     @JoinColumn(name = "\"stationId\"", nullable = false)

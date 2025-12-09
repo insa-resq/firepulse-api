@@ -1,9 +1,11 @@
 package org.resq.firepulseapi.registryservice.entities;
 
+import io.github.thibaultmeyer.cuid.CUID;
 import jakarta.persistence.*;
-import jakarta.validation.constraints.NotNull;
 import lombok.*;
 import org.hibernate.annotations.ColumnDefault;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.Instant;
 import java.util.LinkedHashSet;
@@ -20,27 +22,24 @@ import java.util.Set;
 })
 public class FireStation {
     @Id
-    @Column(name = "id", nullable = false, length = Integer.MAX_VALUE)
-    private String id;
+    @Column(name = "id", nullable = false, updatable = false, length = Integer.MAX_VALUE)
+    private String id = String.valueOf(CUID.randomCUID2());
 
-    @NotNull
+    @CreationTimestamp
     @ColumnDefault("CURRENT_TIMESTAMP")
-    @Column(name = "\"createdAt\"", nullable = false)
+    @Column(name = "\"createdAt\"", nullable = false, updatable = false)
     private Instant createdAt;
 
-    @NotNull
+    @UpdateTimestamp
     @Column(name = "\"updatedAt\"", nullable = false)
     private Instant updatedAt;
 
-    @NotNull
     @Column(name = "name", nullable = false, length = Integer.MAX_VALUE)
     private String name;
 
-    @NotNull
     @Column(name = "latitude", nullable = false)
     private Double latitude;
 
-    @NotNull
     @Column(name = "longitude", nullable = false)
     private Double longitude;
 

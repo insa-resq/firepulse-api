@@ -16,6 +16,7 @@
     <properties>
         <java.version>21</java.version>
         <spring-cloud.version>2025.1.0</spring-cloud.version>
+        <cuid.version>2.0.5</cuid.version>
         <springdoc-openapi.version>3.0.0</springdoc-openapi.version>
         <maven-surefire.version>3.5.1</maven-surefire.version>
         <bytebuddy.version>1.17.8</bytebuddy.version>
@@ -36,6 +37,15 @@
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-security-oauth2-resource-server</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-starter-openfeign</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>io.github.thibaultmeyer</groupId>
+            <artifactId>cuid</artifactId>
+            <version>${cuid.version}</version>
         </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>

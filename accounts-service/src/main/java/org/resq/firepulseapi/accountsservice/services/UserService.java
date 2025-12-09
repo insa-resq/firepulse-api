@@ -1,7 +1,9 @@
 package org.resq.firepulseapi.accountsservice.services;
 
+import feign.FeignException;
+import org.resq.firepulseapi.accountsservice.clients.RegistryClient;
 import org.resq.firepulseapi.accountsservice.dtos.UserCreationDto;
-import org.resq.firepulseapi.accountsservice.dtos.UserProfileDto;
+import org.resq.firepulseapi.accountsservice.dtos.UserDto;
 import org.resq.firepulseapi.accountsservice.entities.User;
 import org.resq.firepulseapi.accountsservice.entities.enums.UserRole;
 import org.resq.firepulseapi.accountsservice.exceptions.ApiException;
@@ -14,21 +16,31 @@ import org.springframework.stereotype.Service;
 public class UserService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final RegistryClient registryClient;
 
-    public UserService(UserRepository userRepository, PasswordEncoder passwordEncoder) {
+    public UserService(UserRepository userRepository, PasswordEncoder passwordEncoder, RegistryClient registryClient) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
+        this.registryClient = registryClient;
     }
 
-    public UserProfileDto createUser(UserCreationDto userCreationDto, UserRole role) {
+    public UserDto createUser(UserCreationDto userCreationDto, UserRole role) {
         if (userRepository.existsByEmail(userCreationDto.getEmail())) {
             throw new ApiException(HttpStatus.CONFLICT, "Email is already in use");
+        }
+
+        try {
+            registryClient.getFireStationById(userCreationDto.getStationId());
+        } catch (FeignException.NotFound e) {
+            throw new ApiException(HttpStatus.NOT_FOUND, "Fire station not found");
         }
 
         User user = new User();
         user.setEmail(userCreationDto.getEmail());
         user.setPassword(passwordEncoder.encode(userCreationDto.getPassword()));
         user.setRole(role);
+        user.setStationId(userCreationDto.getStationId());
+        user.setAvatarUrl(generateDefaultAvatarUrl());
 
         User newUser = userRepository.save(user);
 
@@ -36,17 +48,20 @@ public class UserService {
 
         userRepository.save(newUser);
 
-        return UserProfileDto.fromEntity(newUser);
+        return UserDto.fromEntity(newUser);
     }
 
-    public UserProfileDto getUserProfile(String userId) {
-        User user = userRepository.findById(userId)
+    public UserDto getUserById(String userId) {
+        return userRepository.findById(userId)
+                .map(UserDto::fromEntity)
                 .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "User not found"));
-
-        return UserProfileDto.fromEntity(user);
     }
 
     private String generateAvatarUrl(String userId) {
-        return String.format("https://api.dicebear.com/7.x/bottts-neutral/svg?seed=%s", userId);
+        return String.format("https://api.dicebear.com/9.x/bottts-neutral/svg?seed=%s", userId);
+    }
+
+    private String generateDefaultAvatarUrl() {
+        return "https://api.dicebear.com/9.x/bottts-neutral/svg";
     }
 }

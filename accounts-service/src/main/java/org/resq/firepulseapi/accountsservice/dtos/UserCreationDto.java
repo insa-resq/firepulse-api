@@ -19,4 +19,8 @@ public class UserCreationDto {
     @NotBlank(message = "Password cannot be blank")
     @NotNull(message = "Password is required")
     private String password;
+
+    @NotBlank(message = "Station ID cannot be blank")
+    @NotNull(message = "Station ID is required")
+    private String stationId;
 }

@@ -3,7 +3,7 @@ name: firepulse-api-services
 # The `image` and `container_name` fields MUST have the value 'firepulse-api-{service-name}'
 services:
   accounts-service:
-    image: ghcr.io/insa-resq/firepulse-api/accounts-service:${IMAGE_TAG}
+    image: ghcr.io/insa-resq/firepulse-api/accounts-service:${IMAGE_TAG:-latest}
     pull_policy: always
     build:
       context: .
@@ -38,7 +38,7 @@ services:
         condition: service_healthy
 
   config-service:
-    image: ghcr.io/insa-resq/firepulse-api/config-service:${IMAGE_TAG}
+    image: ghcr.io/insa-resq/firepulse-api/config-service:${IMAGE_TAG:-latest}
     pull_policy: always
     build:
       context: .
@@ -62,7 +62,7 @@ services:
       retries: 5
 
   detection-service:
-    image: ghcr.io/insa-resq/firepulse-api/detection-service:${IMAGE_TAG}
+    image: ghcr.io/insa-resq/firepulse-api/detection-service:${IMAGE_TAG:-latest}
     pull_policy: always
     build:
       context: .
@@ -97,7 +97,7 @@ services:
         condition: service_healthy
 
   discovery-service:
-    image: ghcr.io/insa-resq/firepulse-api/discovery-service:${IMAGE_TAG}
+    image: ghcr.io/insa-resq/firepulse-api/discovery-service:${IMAGE_TAG:-latest}
     pull_policy: always
     build:
       context: .
@@ -126,7 +126,7 @@ services:
         condition: service_healthy
 
   gateway-service:
-    image: ghcr.io/insa-resq/firepulse-api/gateway-service:${IMAGE_TAG}
+    image: ghcr.io/insa-resq/firepulse-api/gateway-service:${IMAGE_TAG:-latest}
     pull_policy: always
     build:
       context: .
@@ -158,7 +158,7 @@ services:
         condition: service_healthy
 
   planning-service:
-    image: ghcr.io/insa-resq/firepulse-api/planning-service:${IMAGE_TAG}
+    image: ghcr.io/insa-resq/firepulse-api/planning-service:${IMAGE_TAG:-latest}
     pull_policy: always
     build:
       context: .
@@ -193,7 +193,7 @@ services:
         condition: service_healthy
 
   registry-service:
-    image: ghcr.io/insa-resq/firepulse-api/registry-service:${IMAGE_TAG}
+    image: ghcr.io/insa-resq/firepulse-api/registry-service:${IMAGE_TAG:-latest}
     pull_policy: always
     build:
       context: .

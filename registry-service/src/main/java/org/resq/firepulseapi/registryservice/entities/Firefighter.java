@@ -1,11 +1,10 @@
 package org.resq.firepulseapi.registryservice.entities;
 
+import io.github.thibaultmeyer.cuid.CUID;
 import jakarta.persistence.*;
-import jakarta.validation.constraints.NotNull;
 import lombok.*;
-import org.hibernate.annotations.ColumnDefault;
-import org.hibernate.annotations.OnDelete;
-import org.hibernate.annotations.OnDeleteAction;
+import org.hibernate.annotations.*;
+import org.hibernate.type.SqlTypes;
 import org.resq.firepulseapi.registryservice.entities.enums.FirefighterRank;
 
 import java.time.Instant;
@@ -23,32 +22,32 @@ import java.time.Instant;
 })
 public class Firefighter {
     @Id
-    @Column(name = "id", nullable = false, length = Integer.MAX_VALUE)
-    private String id;
+    @Column(name = "id", nullable = false, updatable = false, length = Integer.MAX_VALUE)
+    private String id = String.valueOf(CUID.randomCUID2());
 
-    @NotNull
+    @CreationTimestamp
     @ColumnDefault("CURRENT_TIMESTAMP")
-    @Column(name = "\"createdAt\"", nullable = false)
+    @Column(name = "\"createdAt\"", nullable = false, updatable = false)
     private Instant createdAt;
 
-    @NotNull
+    @UpdateTimestamp
     @Column(name = "\"updatedAt\"", nullable = false)
     private Instant updatedAt;
 
-    @NotNull
     @Column(name = "\"firstName\"", nullable = false, length = Integer.MAX_VALUE)
     private String firstName;
 
-    @NotNull
     @Column(name = "\"lastName\"", nullable = false, length = Integer.MAX_VALUE)
     private String lastName;
 
-    @NotNull
     @Enumerated(EnumType.STRING)
-    @Column(name = "rank", nullable = false)
+    @JdbcTypeCode(SqlTypes.NAMED_ENUM)
+    @Column(name = "rank", columnDefinition = "registry.\"FirefighterRank\"", nullable = false)
     private FirefighterRank rank;
 
-    @NotNull
+    @Column(name = "\"userId\"", nullable = false)
+    private String userId;
+
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @OnDelete(action = OnDeleteAction.RESTRICT)
     @JoinColumn(name = "\"stationId\"", nullable = false)
