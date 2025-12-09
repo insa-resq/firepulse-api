@@ -28,8 +28,3 @@ services:
   registry-service:
     image: firepulse-api-registry-service
     pull_policy: never
-
-networks:
-  firepulse_api:
-    name: firepulse_api
-    driver: bridge
