@@ -53,7 +53,7 @@ pipeline {
                         string(credentialsId: 'ssh-password', variable: 'SSH_PASSWORD'),
                         string(credentialsId: 'database-user', variable: 'DATABASE_USER'),
                         string(credentialsId: 'database-password', variable: 'DATABASE_PASSWORD'),
-                        string(credentialsId: 'jwt-secret', variable: 'JWT_SECRET')
+                        string(credentialsId: 'jwt-secret-key', variable: 'JWT_SECRET_KEY')
                     ]) {
                         // Create/Override .env file on deployment server
                         sh """
@@ -63,7 +63,7 @@ pipeline {
                                 echo "DATABASE_NAME=${DATABASE_NAME}" >> ${DEPLOYMENT_DIRECTORY}/.env
                                 echo "DATABASE_USER=${DATABASE_USER}" >> ${DEPLOYMENT_DIRECTORY}/.env
                                 echo "DATABASE_PASSWORD=${DATABASE_PASSWORD}" >> ${DEPLOYMENT_DIRECTORY}/.env
-                                echo "JWT_SECRET=${JWT_SECRET}" >> ${DEPLOYMENT_DIRECTORY}/.env
+                                echo "JWT_SECRET_KEY=${JWT_SECRET_KEY}" >> ${DEPLOYMENT_DIRECTORY}/.env
                                 echo "IMAGE_TAG=${IMAGE_TAG}" >> ${DEPLOYMENT_DIRECTORY}/.env
                                 chmod 600 ${DEPLOYMENT_DIRECTORY}/.env
                             '

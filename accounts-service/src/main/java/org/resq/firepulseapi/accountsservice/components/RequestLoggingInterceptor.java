@@ -1,4 +1,4 @@
-package org.resq.firepulseapi.accountsservice.logging;
+package org.resq.firepulseapi.accountsservice.components;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;

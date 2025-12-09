@@ -1,6 +1,6 @@
-package org.resq.firepulseapi.accountsservice.logging;
+package org.resq.firepulseapi.accountsservice.configs;
 
-import org.springframework.beans.factory.annotation.Autowired;
+import org.resq.firepulseapi.accountsservice.components.RequestLoggingInterceptor;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
@@ -9,7 +9,6 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 public class WebConfig implements WebMvcConfigurer {
     private final RequestLoggingInterceptor requestLoggingInterceptor;
 
-    @Autowired
     public WebConfig(RequestLoggingInterceptor requestLoggingInterceptor) {
         this.requestLoggingInterceptor = requestLoggingInterceptor;
     }
@@ -18,6 +17,6 @@ public class WebConfig implements WebMvcConfigurer {
     public void addInterceptors(InterceptorRegistry registry) {
         registry.addInterceptor(requestLoggingInterceptor)
                 .addPathPatterns("/**")
-                .excludePathPatterns("/actuator/health");
+                .excludePathPatterns("/actuator/health/readiness");
     }
 }

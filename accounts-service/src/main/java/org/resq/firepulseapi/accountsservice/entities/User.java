@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
 import org.hibernate.annotations.ColumnDefault;
+import org.hibernate.validator.constraints.URL;
 import org.resq.firepulseapi.accountsservice.entities.enums.UserRole;
 
 import java.time.Instant;
@@ -33,7 +34,7 @@ public class User {
     private Instant updatedAt;
 
     @NotNull
-    @Column(name = "email", nullable = false, length = Integer.MAX_VALUE)
+    @Column(name = "email", nullable = false, unique = true, length = Integer.MAX_VALUE)
     private String email;
 
     @NotNull
@@ -44,4 +45,8 @@ public class User {
     @Enumerated(EnumType.STRING)
     @Column(name = "role", nullable = false)
     private UserRole role;
+
+    @URL
+    @Column(name = "\"avatarUrl\"")
+    private String avatarUrl;
 }

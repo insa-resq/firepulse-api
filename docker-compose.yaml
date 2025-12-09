@@ -22,16 +22,15 @@ services:
       - DATABASE_NAME=${DATABASE_NAME}
       - DATABASE_USER=${DATABASE_USER}
       - DATABASE_PASSWORD=${DATABASE_PASSWORD}
-      - JWT_SECRET=${JWT_SECRET}
+      - JWT_SECRET_KEY=${JWT_SECRET_KEY}
     networks:
       - firepulse_api
     healthcheck:
-      test: ["CMD", "wget", "-q", "-O-", "http://localhost:8080/actuator/health"]
-      start_period: 45s
-      start_interval: 5s
-      interval: 30s
-      timeout: 5s
-      retries: 3
+      test: ["CMD", "wget", "-q", "-O-", "http://localhost:8080/actuator/health/readiness"]
+      start_period: 75s
+      interval: 10s
+      timeout: 7s
+      retries: 5
     depends_on:
       config-service:
         condition: service_healthy
@@ -56,12 +55,11 @@ services:
     networks:
       - firepulse_api
     healthcheck:
-      test: ["CMD", "wget", "-q", "-O-", "http://localhost:8888/actuator/health"]
-      start_period: 5s
-      start_interval: 5s
-      interval: 30s
+      test: ["CMD", "wget", "-q", "-O-", "http://localhost:8888/actuator/health/readiness"]
+      start_period: 20s
+      interval: 10s
       timeout: 5s
-      retries: 3
+      retries: 5
 
   detection-service:
     image: ghcr.io/insa-resq/firepulse-api/detection-service:${IMAGE_TAG}
@@ -83,16 +81,15 @@ services:
       - DATABASE_NAME=${DATABASE_NAME}
       - DATABASE_USER=${DATABASE_USER}
       - DATABASE_PASSWORD=${DATABASE_PASSWORD}
-      - JWT_SECRET=${JWT_SECRET}
+      - JWT_SECRET_KEY=${JWT_SECRET_KEY}
     networks:
       - firepulse_api
     healthcheck:
-      test: [ "CMD", "wget", "-q", "-O-", "http://localhost:8080/actuator/health" ]
-      start_period: 45s
-      start_interval: 5s
-      interval: 30s
-      timeout: 5s
-      retries: 3
+      test: [ "CMD", "wget", "-q", "-O-", "http://localhost:8080/actuator/health/readiness" ]
+      start_period: 75s
+      interval: 10s
+      timeout: 7s
+      retries: 5
     depends_on:
       config-service:
         condition: service_healthy
@@ -119,12 +116,11 @@ services:
     networks:
       - firepulse_api
     healthcheck:
-      test: ["CMD", "wget", "-q", "-O-", "http://localhost:8761/actuator/health"]
-      start_period: 15s
-      start_interval: 5s
-      interval: 30s
+      test: ["CMD", "wget", "-q", "-O-", "http://localhost:8761/actuator/health/readiness"]
+      start_period: 45s
+      interval: 10s
       timeout: 5s
-      retries: 3
+      retries: 5
     depends_on:
       config-service:
         condition: service_healthy
@@ -150,12 +146,11 @@ services:
     networks:
       - firepulse_api
     healthcheck:
-      test: [ "CMD", "wget", "-q", "-O-", "http://localhost:8080/actuator/health" ]
-      start_period: 45s
-      start_interval: 5s
-      interval: 30s
+      test: [ "CMD", "wget", "-q", "-O-", "http://localhost:8080/actuator/health/readiness" ]
+      start_period: 60s
+      interval: 10s
       timeout: 5s
-      retries: 3
+      retries: 5
     depends_on:
       config-service:
         condition: service_healthy
@@ -182,16 +177,15 @@ services:
       - DATABASE_NAME=${DATABASE_NAME}
       - DATABASE_USER=${DATABASE_USER}
       - DATABASE_PASSWORD=${DATABASE_PASSWORD}
-      - JWT_SECRET=${JWT_SECRET}
+      - JWT_SECRET_KEY=${JWT_SECRET_KEY}
     networks:
       - firepulse_api
     healthcheck:
-      test: ["CMD", "wget", "-q", "-O-", "http://localhost:8080/actuator/health"]
-      start_period: 45s
-      start_interval: 5s
-      interval: 30s
-      timeout: 5s
-      retries: 3
+      test: ["CMD", "wget", "-q", "-O-", "http://localhost:8080/actuator/health/readiness"]
+      start_period: 75s
+      interval: 10s
+      timeout: 7s
+      retries: 5
     depends_on:
       config-service:
         condition: service_healthy
@@ -218,16 +212,15 @@ services:
       - DATABASE_NAME=${DATABASE_NAME}
       - DATABASE_USER=${DATABASE_USER}
       - DATABASE_PASSWORD=${DATABASE_PASSWORD}
-      - JWT_SECRET=${JWT_SECRET}
+      - JWT_SECRET_KEY=${JWT_SECRET_KEY}
     networks:
       - firepulse_api
     healthcheck:
-      test: ["CMD", "wget", "-q", "-O-", "http://localhost:8080/actuator/health"]
-      start_period: 45s
-      start_interval: 5s
-      interval: 30s
-      timeout: 5s
-      retries: 3
+      test: ["CMD", "wget", "-q", "-O-", "http://localhost:8080/actuator/health/readiness"]
+      start_period: 75s
+      interval: 10s
+      timeout: 7s
+      retries: 5
     depends_on:
       config-service:
         condition: service_healthy
