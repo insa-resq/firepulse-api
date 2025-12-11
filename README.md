@@ -26,10 +26,9 @@
 
 ### Accessing the API
 
-- Config service: [http://localhost:8888/actuator/health](http://localhost:8888/actuator/health)
 - Discovery service: [http://localhost:8761](http://localhost:8761)
-- Gateway service: [http://localhost:8080/actuator/health](http://localhost:8080/actuator/health)
-  - Accounts service: [http://localhost:8080/accounts-service/docs/ui.html](http://localhost:8080/accounts-service/docs/ui.html)
-  - Detection service: [http://localhost:8080/detection-service/docs/ui.html](http://localhost:8080/detection-service/docs/ui.html)
-  - Planning service: [http://localhost:8080/planning-service/docs/ui.html](http://localhost:8080/planning-service/docs/ui.html)
-  - Registry service: [http://localhost:8080/registry-service/docs/ui.html](http://localhost:8080/registry-service/docs/ui.html)
+- Gateway service: [http://localhost:8080/api/actuator/health](http://localhost:8080/api/actuator/health)
+  - Accounts service: [http://localhost:8080/api/accounts-service/docs/ui.html](http://localhost:8080/api/accounts-service/docs/ui.html)
+  - Detection service: [http://localhost:8080/api/detection-service/docs/ui.html](http://localhost:8080/api/detection-service/docs/ui.html)
+  - Planning service: [http://localhost:8080/api/planning-service/docs/ui.html](http://localhost:8080/api/planning-service/docs/ui.html)
+  - Registry service: [http://localhost:8080/api/registry-service/docs/ui.html](http://localhost:8080/api/registry-service/docs/ui.html)

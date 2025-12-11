@@ -20,7 +20,7 @@ public class OpenApiConfig {
                         .description("Documentation of the fire detection API.")
                 )
                 .addServersItem(new Server()
-                        .url("/detection-service")
+                        .url("/api/detection-service")
                         .description("Base path")
                 )
                 .addSecurityItem(new SecurityRequirement().addList("bearerAuth"))

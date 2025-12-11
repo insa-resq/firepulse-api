@@ -20,7 +20,7 @@ public class OpenApiConfig {
                         .description("Documentation of the planning API.")
                 )
                 .addServersItem(new Server()
-                        .url("/planning-service")
+                        .url("/api/planning-service")
                         .description("Base path")
                 )
                 .addSecurityItem(new SecurityRequirement().addList("bearerAuth"))

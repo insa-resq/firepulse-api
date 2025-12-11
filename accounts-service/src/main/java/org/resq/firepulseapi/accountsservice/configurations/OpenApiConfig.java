@@ -20,7 +20,7 @@ public class OpenApiConfig {
                         .description("Documentation of the accounts API.")
                 )
                 .addServersItem(new Server()
-                        .url("/accounts-service")
+                        .url("/api/accounts-service")
                         .description("Base path")
                 )
                 .addSecurityItem(new SecurityRequirement().addList("bearerAuth"))

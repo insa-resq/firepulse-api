@@ -20,7 +20,7 @@ public class OpenApiConfig {
                         .description("Documentation of the registry API.")
                 )
                 .addServersItem(new Server()
-                        .url("/registry-service")
+                        .url("/api/registry-service")
                         .description("Base path")
                 )
                 .addSecurityItem(new SecurityRequirement().addList("bearerAuth"))
