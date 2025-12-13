@@ -45,4 +45,13 @@ public class Planning {
 
     @OneToMany(mappedBy = "planning")
     private Set<ShiftAssignment> shiftAssignments = new LinkedHashSet<>();
+
+    @PrePersist
+    @PreUpdate
+    public void updateTimestamps() {
+        if (createdAt == null) {
+            createdAt = Instant.now();
+        }
+        updatedAt = Instant.now();
+    }
 }

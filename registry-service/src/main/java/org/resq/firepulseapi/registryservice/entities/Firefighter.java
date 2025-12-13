@@ -55,4 +55,13 @@ public class Firefighter {
 
     @OneToOne(mappedBy = "firefighter")
     private FirefighterTraining firefighterTraining;
+
+    @PrePersist
+    @PreUpdate
+    public void updateTimestamps() {
+        if (createdAt == null) {
+            createdAt = Instant.now();
+        }
+        updatedAt = Instant.now();
+    }
 }

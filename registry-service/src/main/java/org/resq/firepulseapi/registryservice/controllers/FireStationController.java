@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/firestations")
+@RequestMapping("/fire-stations")
 @Tag(name = "Fire Station Controller", description = "Endpoints for fire stations management")
 public class FireStationController {
     private final FireStationService fireStationService;

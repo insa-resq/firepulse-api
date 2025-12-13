@@ -8,6 +8,6 @@ import org.springframework.web.bind.annotation.PathVariable;
 
 @FeignClient(name = "registry-service", configuration = FeignClientConfig.class)
 public interface RegistryClient {
-    @GetMapping("/firestations/{stationId}")
+    @GetMapping("/fire-stations/{stationId}")
     FireStationDto getFireStationById(@PathVariable String stationId);
 }

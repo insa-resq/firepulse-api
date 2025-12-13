@@ -82,4 +82,13 @@ public class FirefighterTraining {
     @OnDelete(action = OnDeleteAction.CASCADE)
     @JoinColumn(name = "\"firefighterId\"", nullable = false)
     private Firefighter firefighter;
+
+    @PrePersist
+    @PreUpdate
+    public void updateTimestamps() {
+        if (createdAt == null) {
+            createdAt = Instant.now();
+        }
+        updatedAt = Instant.now();
+    }
 }

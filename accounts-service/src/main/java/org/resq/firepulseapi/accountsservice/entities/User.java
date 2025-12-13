@@ -52,4 +52,13 @@ public class User {
 
     @Column(name = "\"stationId\"", nullable = false)
     private String stationId;
+
+    @PrePersist
+    @PreUpdate
+    public void updateTimestamps() {
+        if (createdAt == null) {
+            createdAt = Instant.now();
+        }
+        updatedAt = Instant.now();
+    }
 }

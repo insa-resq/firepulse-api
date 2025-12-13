@@ -41,4 +41,13 @@ public class FireStation {
 
     @OneToMany(mappedBy = "station")
     private Set<Planning> plannings = new LinkedHashSet<>();
+
+    @PrePersist
+    @PreUpdate
+    public void updateTimestamps() {
+        if (createdAt == null) {
+            createdAt = Instant.now();
+        }
+        updatedAt = Instant.now();
+    }
 }

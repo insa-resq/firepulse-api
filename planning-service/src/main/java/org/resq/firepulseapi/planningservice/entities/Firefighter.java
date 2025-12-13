@@ -60,4 +60,13 @@ public class Firefighter {
     @OneToMany
     @JoinColumn(name = "\"firefighterId\"")
     private Set<ShiftAssignment> shiftAssignments = new LinkedHashSet<>();
+
+    @PrePersist
+    @PreUpdate
+    public void updateTimestamps() {
+        if (createdAt == null) {
+            createdAt = Instant.now();
+        }
+        updatedAt = Instant.now();
+    }
 }

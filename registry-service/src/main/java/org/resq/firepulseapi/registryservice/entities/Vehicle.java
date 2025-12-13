@@ -1,5 +1,6 @@
 package org.resq.firepulseapi.registryservice.entities;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import io.github.thibaultmeyer.cuid.CUID;
 import jakarta.persistence.*;
 import lombok.*;
@@ -8,7 +9,6 @@ import org.hibernate.type.SqlTypes;
 import org.resq.firepulseapi.registryservice.entities.enums.VehicleType;
 
 import java.time.Instant;
-import java.util.Map;
 
 @AllArgsConstructor
 @NoArgsConstructor
@@ -48,10 +48,19 @@ public class Vehicle {
     @ColumnDefault("'{}'")
     @Column(name = "metadata", nullable = false)
     @JdbcTypeCode(SqlTypes.JSON)
-    private Map<String, Object> metadata;
+    private JsonNode metadata;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @OnDelete(action = OnDeleteAction.CASCADE)
     @JoinColumn(name = "\"stationId\"", nullable = false)
     private FireStation station;
+
+    @PrePersist
+    @PreUpdate
+    public void updateTimestamps() {
+        if (createdAt == null) {
+            createdAt = Instant.now();
+        }
+        updatedAt = Instant.now();
+    }
 }

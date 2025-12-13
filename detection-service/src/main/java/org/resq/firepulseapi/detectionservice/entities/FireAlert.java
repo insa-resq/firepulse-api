@@ -63,4 +63,13 @@ public class FireAlert {
     @OnDelete(action = OnDeleteAction.SET_NULL)
     @JoinColumn(name = "\"imageId\"")
     private Image image;
+
+    @PrePersist
+    @PreUpdate
+    public void updateTimestamps() {
+        if (createdAt == null) {
+            createdAt = Instant.now();
+        }
+        updatedAt = Instant.now();
+    }
 }

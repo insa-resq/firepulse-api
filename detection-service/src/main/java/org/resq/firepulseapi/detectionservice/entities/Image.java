@@ -1,5 +1,6 @@
 package org.resq.firepulseapi.detectionservice.entities;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import io.github.thibaultmeyer.cuid.CUID;
 import jakarta.persistence.*;
 import lombok.*;
@@ -10,7 +11,6 @@ import org.resq.firepulseapi.detectionservice.entities.enums.ImageSplit;
 
 import java.time.Instant;
 import java.util.LinkedHashSet;
-import java.util.Map;
 import java.util.Set;
 
 @AllArgsConstructor
@@ -52,8 +52,17 @@ public class Image {
     @ColumnDefault("'{}'")
     @Column(name = "metadata", nullable = false)
     @JdbcTypeCode(SqlTypes.JSON)
-    private Map<String, Object> metadata;
+    private JsonNode metadata;
 
     @OneToMany(mappedBy = "image")
     private Set<FireAlert> fireAlerts = new LinkedHashSet<>();
+
+    @PrePersist
+    @PreUpdate
+    public void updateTimestamps() {
+        if (createdAt == null) {
+            createdAt = Instant.now();
+        }
+        updatedAt = Instant.now();
+    }
 }

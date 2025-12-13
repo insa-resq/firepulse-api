@@ -53,4 +53,13 @@ public class ShiftAssignment {
     @OnDelete(action = OnDeleteAction.CASCADE)
     @JoinColumn(name = "\"planningId\"", nullable = false)
     private Planning planning;
+
+    @PrePersist
+    @PreUpdate
+    public void updateTimestamps() {
+        if (createdAt == null) {
+            createdAt = Instant.now();
+        }
+        updatedAt = Instant.now();
+    }
 }
