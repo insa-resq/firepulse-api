@@ -14,7 +14,7 @@
 
 2. Forward the database port to your local machine:
     ```bash
-    ssh -N -L 5432:localhost:5432 <user>@192.168.37.100
+    ssh -L 5432:localhost:5432 <user>@192.168.37.100
     ```
 
 3. Create a `.env` file in the root directory and set up the environment variables as described in [`.env.example`](.env.example).

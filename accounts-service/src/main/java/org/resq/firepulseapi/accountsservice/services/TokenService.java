@@ -51,7 +51,6 @@ public class TokenService {
                 .issuedAt(now)
                 .expiresAt(now.plus(jwtValidity))
                 .subject(userDetails.getId())
-                .claim("email", userDetails.getUsername())
                 .claim("roles", scope)
                 .build();
 

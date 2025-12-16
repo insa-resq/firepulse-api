@@ -1,6 +1,5 @@
 package org.resq.firepulseapi.detectionservice.dtos;
 
-import jakarta.validation.Valid;
 import jakarta.validation.constraints.AssertTrue;
 import jakarta.validation.constraints.Pattern;
 import lombok.AllArgsConstructor;

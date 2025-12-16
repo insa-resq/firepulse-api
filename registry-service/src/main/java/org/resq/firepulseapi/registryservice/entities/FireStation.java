@@ -4,8 +4,6 @@ import io.github.thibaultmeyer.cuid.CUID;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.ColumnDefault;
-import org.hibernate.annotations.CreationTimestamp;
-import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.Instant;
 import java.util.LinkedHashSet;
@@ -25,12 +23,10 @@ public class FireStation {
     @Column(name = "id", nullable = false, updatable = false, length = Integer.MAX_VALUE)
     private String id = String.valueOf(CUID.randomCUID2());
 
-    @CreationTimestamp
     @ColumnDefault("CURRENT_TIMESTAMP")
     @Column(name = "\"createdAt\"", nullable = false, updatable = false)
     private Instant createdAt;
 
-    @UpdateTimestamp
     @Column(name = "\"updatedAt\"", nullable = false)
     private Instant updatedAt;
 

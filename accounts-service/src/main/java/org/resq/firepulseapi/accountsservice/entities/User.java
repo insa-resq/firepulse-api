@@ -26,12 +26,10 @@ public class User {
     @Column(name = "id", nullable = false, updatable = false, length = Integer.MAX_VALUE)
     private String id = String.valueOf(CUID.randomCUID2());
 
-    @CreationTimestamp
     @ColumnDefault("CURRENT_TIMESTAMP")
     @Column(name = "\"createdAt\"", nullable = false, updatable = false)
     private Instant createdAt;
 
-    @UpdateTimestamp
     @Column(name = "\"updatedAt\"", nullable = false)
     private Instant updatedAt;
 
