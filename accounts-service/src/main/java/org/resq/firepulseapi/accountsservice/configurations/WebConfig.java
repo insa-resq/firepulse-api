@@ -14,7 +14,6 @@ import org.springframework.web.bind.support.WebDataBinderFactory;
 import org.springframework.web.context.request.NativeWebRequest;
 import org.springframework.web.method.support.HandlerMethodArgumentResolver;
 import org.springframework.web.method.support.ModelAndViewContainer;
-import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
@@ -32,15 +31,6 @@ public class WebConfig implements WebMvcConfigurer {
 
     static {
         SpringDocUtils.getConfig().addAnnotationsToIgnore(AuthenticatedUserRole.class);
-    }
-
-    @Override
-    public void addCorsMappings(@NonNull CorsRegistry registry) {
-        registry.addMapping("/**")
-                .allowedOriginPatterns("*")
-                .allowedMethods("*")
-                .allowedHeaders("*")
-                .allowCredentials(true);
     }
 
     @Override
