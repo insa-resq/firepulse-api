@@ -6,12 +6,15 @@ import jakarta.validation.Valid;
 import org.resq.firepulseapi.accountsservice.dtos.UserDto;
 import org.resq.firepulseapi.accountsservice.dtos.UserProfileUpdateDto;
 import org.resq.firepulseapi.accountsservice.dtos.UserStationUpdateDto;
+import org.resq.firepulseapi.accountsservice.dtos.UsersFilters;
 import org.resq.firepulseapi.accountsservice.services.UserService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/users")
@@ -40,6 +43,14 @@ public class UserController {
         String userId = jwt.getSubject();
         UserDto updatedUserDto = userService.updateUserById(userId, userProfileUpdateDto);
         return ResponseEntity.ok(updatedUserDto);
+    }
+
+    @GetMapping
+    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Get all users (admin only)")
+    public ResponseEntity<List<UserDto>> getAllUsers(@Valid @ModelAttribute UsersFilters filters) {
+        List<UserDto> users = userService.getAllUsers(filters);
+        return ResponseEntity.ok(users);
     }
 
     @PatchMapping("/{userId}")

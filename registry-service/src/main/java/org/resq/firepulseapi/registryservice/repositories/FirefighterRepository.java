@@ -9,6 +9,6 @@ import org.springframework.stereotype.Repository;
 import java.util.Optional;
 
 @Repository
-public interface FirefighterRepository extends JpaRepository<@NonNull Firefighter, @NonNull String>, JpaSpecificationExecutor<@NonNull Firefighter> {
+public interface FirefighterRepository extends JpaRepository<Firefighter, String>, JpaSpecificationExecutor<Firefighter> {
     Optional<Firefighter> findFirefighterByUserId(String userId);
 }
