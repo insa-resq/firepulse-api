@@ -1,13 +1,10 @@
 package org.resq.firepulseapi.planningservice.entities.enums;
 
 public enum FirefighterRank {
-    SECOND_CLASS,
-    FIRST_CLASS,
+    SAPPER,
     CORPORAL,
-    CHIEF_CORPORAL,
     SERGEANT,
-    CHIEF_SERGEANT,
     ADJUTANT,
-    CHIEF_ADJUTANT,
-    LIEUTENANT
+    LIEUTENANT,
+    CAPTAIN
 }

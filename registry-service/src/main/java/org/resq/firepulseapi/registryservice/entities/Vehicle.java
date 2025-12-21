@@ -1,6 +1,5 @@
 package org.resq.firepulseapi.registryservice.entities;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import io.github.thibaultmeyer.cuid.CUID;
 import jakarta.persistence.*;
 import lombok.*;
@@ -42,11 +41,6 @@ public class Vehicle {
 
     @Column(name = "\"availableCount\"", nullable = false)
     private Integer availableCount;
-
-    @ColumnDefault("'{}'")
-    @Column(name = "metadata", nullable = false)
-    @JdbcTypeCode(SqlTypes.JSON)
-    private JsonNode metadata;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @OnDelete(action = OnDeleteAction.CASCADE)

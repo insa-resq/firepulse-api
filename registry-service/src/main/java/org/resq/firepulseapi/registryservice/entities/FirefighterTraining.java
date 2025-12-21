@@ -29,52 +29,36 @@ public class FirefighterTraining {
     private Instant updatedAt;
 
     @ColumnDefault("false")
-    @Column(name = "ppbe", nullable = false)
-    private Boolean ppbe = false;
-
-    @ColumnDefault("false")
-    @Column(name = "inc", nullable = false)
-    private Boolean inc = false;
-
-    @ColumnDefault("false")
-    @Column(name = "\"roadRescue\"", nullable = false)
-    private Boolean roadRescue = false;
-
-    @ColumnDefault("false")
-    @Column(name = "\"fiSpv\"", nullable = false)
-    private Boolean fiSpv = false;
-
-    @ColumnDefault("false")
-    @Column(name = "\"teamLeader\"", nullable = false)
-    private Boolean teamLeader = false;
-
-    @ColumnDefault("false")
-    @Column(name = "ca1e", nullable = false)
-    private Boolean ca1e = false;
-
-    @ColumnDefault("false")
-    @Column(name = "cate", nullable = false)
-    private Boolean cate = false;
-
-    @ColumnDefault("false")
-    @Column(name = "cdg", nullable = false)
-    private Boolean cdg = false;
-
-    @ColumnDefault("false")
-    @Column(name = "cod0", nullable = false)
-    private Boolean cod0 = false;
-
-    @ColumnDefault("false")
-    @Column(name = "cod1", nullable = false)
-    private Boolean cod1 = false;
-
-    @ColumnDefault("false")
     @Column(name = "\"permitB\"", nullable = false)
     private Boolean permitB = false;
 
     @ColumnDefault("false")
     @Column(name = "\"permitC\"", nullable = false)
     private Boolean permitC = false;
+
+    @ColumnDefault("false")
+    @Column(name = "\"permitAircraft\"", nullable = false)
+    private Boolean permitAircraft = false;
+
+    @ColumnDefault("false")
+    @Column(name = "suap", nullable = false)
+    private Boolean suap = false;
+
+    @ColumnDefault("false")
+    @Column(name = "inc", nullable = false)
+    private Boolean inc = false;
+
+    @ColumnDefault("false")
+    @Column(name = "\"smallTeamLeader\"", nullable = false)
+    private Boolean smallTeamLeader = false;
+
+    @ColumnDefault("false")
+    @Column(name = "\"mediumTeamLeader\"", nullable = false)
+    private Boolean mediumTeamLeader = false;
+
+    @ColumnDefault("false")
+    @Column(name = "\"largeTeamLeader\"", nullable = false)
+    private Boolean largeTeamLeader = false;
 
     @OneToOne(fetch = FetchType.LAZY, optional = false)
     @OnDelete(action = OnDeleteAction.CASCADE)
