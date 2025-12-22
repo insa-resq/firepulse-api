@@ -2,13 +2,15 @@ package org.resq.firepulseapi.registryservice.controllers;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import org.resq.firepulseapi.registryservice.dtos.FireStationDto;
+import org.resq.firepulseapi.registryservice.dtos.FireStationsFilters;
 import org.resq.firepulseapi.registryservice.services.FireStationService;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/fire-stations")
@@ -20,10 +22,18 @@ public class FireStationController {
         this.fireStationService = fireStationService;
     }
 
+    @GetMapping
+    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Get a list of all fire stations (admin only)")
+    public ResponseEntity<List<FireStationDto>> getAllFireStations(@Valid @ModelAttribute FireStationsFilters filters) {
+        List<FireStationDto> fireStations = fireStationService.getAllFireStations(filters);
+        return ResponseEntity.ok(fireStations);
+    }
+
     @GetMapping("/{stationId}")
     @Operation(summary = "Get a fire station by its ID")
     public ResponseEntity<FireStationDto> getFireStationById(@PathVariable String stationId) {
-        FireStationDto fireStationDto = fireStationService.getFireStationById(stationId);
-        return ResponseEntity.ok(fireStationDto);
+        FireStationDto fireStation = fireStationService.getFireStationById(stationId);
+        return ResponseEntity.ok(fireStation);
     }
 }
