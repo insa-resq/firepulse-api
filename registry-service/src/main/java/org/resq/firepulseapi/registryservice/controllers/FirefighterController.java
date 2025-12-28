@@ -10,6 +10,8 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/firefighters")
 @Tag(name = "Firefighter Controller", description = "Endpoints for firefighter management")
@@ -18,6 +20,13 @@ public class FirefighterController {
 
     public FirefighterController(FirefighterService firefighterService) {
         this.firefighterService = firefighterService;
+    }
+
+    @GetMapping
+    @Operation(summary = "Get a list of all firefighters")
+    public ResponseEntity<List<FirefighterDto>> getAllFirefighters() {
+        List<FirefighterDto> firefighters = firefighterService.getAllFirefighters();
+        return ResponseEntity.ok(firefighters);
     }
 
     @GetMapping("/{firefighterId}")
