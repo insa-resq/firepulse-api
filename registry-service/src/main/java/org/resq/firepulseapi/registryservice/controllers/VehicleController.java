@@ -5,9 +5,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import org.resq.firepulseapi.registryservice.dtos.VehicleDto;
 import org.resq.firepulseapi.registryservice.services.VehicleService;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
@@ -27,5 +25,12 @@ public class VehicleController {
         List<VehicleDto> vehicles = vehicleService.getAllVehicles();
         return ResponseEntity.ok(vehicles);
     }
-}
 
+    // AJOUTER CETTE MÉTHODE
+    @GetMapping("/{vehicleId}")
+    @Operation(summary = "Get a vehicle by its ID")
+    public ResponseEntity<VehicleDto> getVehicleById(@PathVariable String vehicleId) {
+        VehicleDto vehicle = vehicleService.getVehicleById(vehicleId);
+        return ResponseEntity.ok(vehicle);
+    }
+}
