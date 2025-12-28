@@ -1,7 +1,9 @@
 package org.resq.firepulseapi.registryservice.services;
 
 import org.resq.firepulseapi.registryservice.dtos.VehicleDto;
+import org.resq.firepulseapi.registryservice.exceptions.ApiException;
 import org.resq.firepulseapi.registryservice.repositories.VehicleRepository;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -19,5 +21,12 @@ public class VehicleService {
                 .stream()
                 .map(VehicleDto::fromEntity)
                 .toList();
+    }
+
+    // AJOUTER CETTE MÉTHODE
+    public VehicleDto getVehicleById(String vehicleId) {
+        return vehicleRepository.findById(vehicleId)
+                .map(VehicleDto::fromEntity)
+                .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "Vehicle not found"));
     }
 }
