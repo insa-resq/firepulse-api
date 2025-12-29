@@ -67,9 +67,8 @@ public class ImageService {
                 .map(imgDto -> {
                     Image image = new Image();
                     image.setUrl(imgDto.getUrl());
-                    image.setWidth(imgDto.getWidth());
-                    image.setHeight(imgDto.getHeight());
                     image.setSplit(imgDto.getSplit());
+                    image.setContainsFire(imgDto.getContainsFire());
                     image.setMetadata(Conversion.mapToJsonNode(imgDto.getMetadata()));
                     return image;
                 })
@@ -112,6 +111,10 @@ public class ImageService {
 
             if (filters.getSplits() != null && !filters.getSplits().isEmpty()) {
                 predicates.add(root.get("split").in(filters.getSplits()));
+            }
+
+            if (filters.getContainsFire() != null) {
+                predicates.add(criteriaBuilder.equal(root.get("containsFire"), filters.getContainsFire()));
             }
 
             return criteriaBuilder.and(predicates.toArray(new Predicate[0]));

@@ -18,9 +18,8 @@ public class ImageDto {
     private Instant createdAt;
     private Instant updatedAt;
     private String url;
-    private Integer width;
-    private Integer height;
     private ImageSplit imageSplit;
+    private Boolean containsFire;
     private Map<String, Object> metadata;
 
     public static ImageDto fromEntity(Image image) {
@@ -29,9 +28,8 @@ public class ImageDto {
         dto.setCreatedAt(image.getCreatedAt());
         dto.setUpdatedAt(image.getUpdatedAt());
         dto.setUrl(image.getUrl());
-        dto.setWidth(image.getWidth());
-        dto.setHeight(image.getHeight());
         dto.setImageSplit(image.getSplit());
+        dto.setContainsFire(image.getContainsFire());
         dto.setMetadata(Conversion.jsonNodeToMap(image.getMetadata()));
         return dto;
     }

@@ -21,12 +21,10 @@ public class ImagesBulkCreationDto {
     public static class ImageCreationDto {
         @NotNull(message = "URL is required")
         private String url;
-        @NotNull(message = "Width is required")
-        private Integer width;
-        @NotNull(message = "Height is required")
-        private Integer height;
         @NotNull(message = "Split is required")
         private ImageSplit split;
+        @NotNull(message = "ContainsFire is required")
+        private Boolean containsFire;
         private Map<String, Object> metadata;
     }
 

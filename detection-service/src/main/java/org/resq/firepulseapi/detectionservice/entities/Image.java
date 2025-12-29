@@ -38,16 +38,14 @@ public class Image {
     @Column(name = "url", nullable = false, length = Integer.MAX_VALUE)
     private String url;
 
-    @Column(name = "width", nullable = false)
-    private Integer width;
-
-    @Column(name = "height", nullable = false)
-    private Integer height;
-
     @Enumerated(EnumType.STRING)
     @JdbcTypeCode(SqlTypes.NAMED_ENUM)
     @Column(name = "split", columnDefinition = "detection.\"ImageSplit\"", nullable = false)
     private ImageSplit split;
+
+    @ColumnDefault("false")
+    @Column(name = "\"containsFire\"", nullable = false)
+    private Boolean containsFire = false;
 
     @ColumnDefault("'{}'")
     @Column(name = "metadata", nullable = false)

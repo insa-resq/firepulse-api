@@ -12,4 +12,5 @@ import java.util.List;
 @NoArgsConstructor
 public class ImagesFilters {
     private List<ImageSplit> splits;
+    private Boolean containsFire;
 }
