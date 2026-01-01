@@ -3,9 +3,9 @@ package org.resq.firepulseapi.detectionservice.controllers;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotBlank;
 import org.resq.firepulseapi.detectionservice.dtos.ImageDto;
 import org.resq.firepulseapi.detectionservice.dtos.ImagesBulkCreationDto;
-import org.resq.firepulseapi.detectionservice.dtos.ImagesBulkDeletionDto;
 import org.resq.firepulseapi.detectionservice.dtos.ImagesFilters;
 import org.resq.firepulseapi.detectionservice.services.ImageService;
 import org.springframework.http.HttpStatus;
@@ -52,8 +52,12 @@ public class ImageController {
     @DeleteMapping
     @PreAuthorize("hasRole('ADMIN')")
     @Operation(summary = "Delete one or multiple images")
-    public ResponseEntity<Void> deleteImages(@Valid @RequestBody ImagesBulkDeletionDto imagesBulkDeletionDto) {
-        imageService.deleteImages(imagesBulkDeletionDto);
+    public ResponseEntity<Void> deleteImages(
+            @Valid
+            @RequestParam("imageIds")
+            List<@NotBlank(message = "An image ID cannot be blank") String> imageIds
+    ) {
+        imageService.deleteImages(imageIds);
         return ResponseEntity.noContent().build();
     }
 }

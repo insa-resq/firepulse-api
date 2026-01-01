@@ -3,7 +3,6 @@ package org.resq.firepulseapi.detectionservice.services;
 import jakarta.persistence.criteria.Predicate;
 import org.resq.firepulseapi.detectionservice.dtos.ImageDto;
 import org.resq.firepulseapi.detectionservice.dtos.ImagesBulkCreationDto;
-import org.resq.firepulseapi.detectionservice.dtos.ImagesBulkDeletionDto;
 import org.resq.firepulseapi.detectionservice.dtos.ImagesFilters;
 import org.resq.firepulseapi.detectionservice.entities.Image;
 import org.resq.firepulseapi.detectionservice.exceptions.ApiException;
@@ -82,11 +81,11 @@ public class ImageService {
     }
 
     @Transactional
-    public void deleteImages(ImagesBulkDeletionDto imagesBulkDeletionDto) {
-        Set<String> imageIdsSet = new HashSet<>(imagesBulkDeletionDto.getImageIds());
+    public void deleteImages(List<String> imageIds) {
+        Set<String> imageIdsSet = new HashSet<>(imageIds);
         List<Image> imagesToDelete = imageRepository.findAllById(imageIdsSet);
 
-        if (imagesToDelete.size() != imagesBulkDeletionDto.getImageIds().size()) {
+        if (imagesToDelete.size() != imageIds.size()) {
             Set<String> foundIds = imagesToDelete.stream()
                     .map(Image::getId)
                     .collect(Collectors.toSet());
