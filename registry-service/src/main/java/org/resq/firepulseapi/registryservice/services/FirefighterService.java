@@ -1,6 +1,7 @@
 package org.resq.firepulseapi.registryservice.services;
 
 import org.resq.firepulseapi.registryservice.dtos.FirefighterDto;
+import org.resq.firepulseapi.registryservice.dtos.FirefighterFilters;
 import org.resq.firepulseapi.registryservice.exceptions.ApiException;
 import org.resq.firepulseapi.registryservice.repositories.FirefighterRepository;
 import org.springframework.http.HttpStatus;
@@ -28,10 +29,28 @@ public class FirefighterService {
                 .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "Firefighter not found for the given user ID"));
     }
 
-    public List<FirefighterDto> getAllFirefighters() {
+    public List<FirefighterDto> getAllFirefighters(FirefighterFilters filters) {
         return firefighterRepository.findAll()
                 .stream()
                 .map(FirefighterDto::fromEntity)
+                .filter(firefighter -> {
+                    // Filtre par stationId
+                    if (filters.getStationId() != null && !filters.getStationId().isEmpty()) {
+                        if (firefighter.getStationId() == null ||
+                                !firefighter.getStationId().equals(filters.getStationId())) {
+                            return false;
+                        }
+                    }
+
+                    // Filtre par rank
+                    if (filters.getRank() != null && !filters.getRank().isEmpty()) {
+                        if (!firefighter.getRank().toString().equals(filters.getRank())) {
+                            return false;
+                        }
+                    }
+
+                    return true;
+                })
                 .toList();
     }
 }

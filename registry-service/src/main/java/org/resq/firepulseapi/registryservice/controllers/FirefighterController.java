@@ -2,13 +2,12 @@ package org.resq.firepulseapi.registryservice.controllers;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import org.resq.firepulseapi.registryservice.dtos.FirefighterDto;
+import org.resq.firepulseapi.registryservice.dtos.FirefighterFilters;
 import org.resq.firepulseapi.registryservice.services.FirefighterService;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
@@ -24,8 +23,8 @@ public class FirefighterController {
 
     @GetMapping
     @Operation(summary = "Get a list of all firefighters")
-    public ResponseEntity<List<FirefighterDto>> getAllFirefighters() {
-        List<FirefighterDto> firefighters = firefighterService.getAllFirefighters();
+    public ResponseEntity<List<FirefighterDto>> getAllFirefighters(@Valid @ModelAttribute FirefighterFilters filters) {
+        List<FirefighterDto> firefighters = firefighterService.getAllFirefighters(filters);
         return ResponseEntity.ok(firefighters);
     }
 
