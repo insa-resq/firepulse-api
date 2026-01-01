@@ -1,4 +1,3 @@
-// VehicleDto.java - UPDATED
 package org.resq.firepulseapi.registryservice.dtos;
 
 import lombok.AllArgsConstructor;
@@ -22,7 +21,6 @@ public class VehicleDto {
     private String stationId;
 
     public static VehicleDto fromEntity(Vehicle vehicle) {
-        if (vehicle == null) return null;
         VehicleDto dto = new VehicleDto();
         dto.setId(vehicle.getId());
         dto.setCreatedAt(vehicle.getCreatedAt());
