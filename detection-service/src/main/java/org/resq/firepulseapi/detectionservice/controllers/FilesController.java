@@ -35,7 +35,7 @@ public class FilesController {
         String remoteUrl = String.format(
                 "%s/files/%s/%s",
                 detectionEngineApiBaseUrl,
-                fileGroup.getValue(),
+                fileGroup,
                 fileName
         );
 
