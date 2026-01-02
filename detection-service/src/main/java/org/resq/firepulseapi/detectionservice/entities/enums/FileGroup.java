@@ -5,7 +5,7 @@ import lombok.Getter;
 @Getter
 public enum FileGroup {
     LIVE("live"),
-    RAW("raw"),;
+    RAW("raw");
 
     private final String value;
 
