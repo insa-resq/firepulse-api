@@ -5,12 +5,14 @@ import org.resq.firepulseapi.detectionservice.annotations.AuthenticatedUserRole;
 import org.resq.firepulseapi.detectionservice.components.RequestLoggingInterceptor;
 import org.resq.firepulseapi.detectionservice.entities.enums.UserRole;
 import org.springdoc.core.utils.SpringDocUtils;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.MethodParameter;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.support.WebDataBinderFactory;
+import org.springframework.web.client.RestTemplate;
 import org.springframework.web.context.request.NativeWebRequest;
 import org.springframework.web.method.support.HandlerMethodArgumentResolver;
 import org.springframework.web.method.support.ModelAndViewContainer;
@@ -84,5 +86,10 @@ public class WebConfig implements WebMvcConfigurer {
                 }
             }
         });
+    }
+
+    @Bean
+    public RestTemplate restTemplate() {
+        return new RestTemplate();
     }
 }
