@@ -2,6 +2,7 @@ package org.resq.firepulseapi.registryservice.services;
 
 import org.resq.firepulseapi.registryservice.dtos.FirefighterDto;
 import org.resq.firepulseapi.registryservice.dtos.FirefighterFilters;
+import org.resq.firepulseapi.registryservice.entities.Firefighter; // <-- IMPORT MANQUANT
 import org.resq.firepulseapi.registryservice.exceptions.ApiException;
 import org.resq.firepulseapi.registryservice.repositories.FirefighterRepository;
 import org.springframework.http.HttpStatus;
@@ -30,23 +31,35 @@ public class FirefighterService {
     }
 
     public List<FirefighterDto> getAllFirefighters(FirefighterFilters filters) {
-        return firefighterRepository.findAll()
-                .stream()
-                .map(FirefighterDto::fromEntity)
-                .filter(firefighter -> {
+        // Récupère d'abord tous les pompiers avec leurs stations
+        List<Firefighter> allFirefighters = firefighterRepository.findAll();
+
+        return allFirefighters.stream()
+                .map(firefighter -> {
+                    // Crée le DTO
+                    FirefighterDto dto = FirefighterDto.fromEntity(firefighter);
+
+                    // Assure-toi que stationId n'est pas null
+                    if (dto.getStationId() == null && firefighter.getStation() != null) {
+                        dto.setStationId(firefighter.getStation().getId());
+                    }
+
+                    return dto;
+                })
+                .filter(firefighterDto -> { // CHANGÉ: firefighter → firefighterDto
                     // Filtre par stationId
                     if (filters.getStationId() != null && !filters.getStationId().isEmpty()) {
-                        if (firefighter.getStationId() == null ||
-                                !firefighter.getStationId().equals(filters.getStationId())) {
+                        // Si le pompier n'a pas de station, on le filtre
+                        if (firefighterDto.getStationId() == null) {
                             return false;
                         }
+                        // Compare les IDs
+                        return firefighterDto.getStationId().equals(filters.getStationId());
                     }
 
                     // Filtre par rank
-                    if (filters.getRank() != null && !filters.getRank().isEmpty()) {
-                        if (!firefighter.getRank().toString().equals(filters.getRank())) {
-                            return false;
-                        }
+                    if (filters.getRank() != null) {
+                        return firefighterDto.getRank().equals(filters.getRank());
                     }
 
                     return true;

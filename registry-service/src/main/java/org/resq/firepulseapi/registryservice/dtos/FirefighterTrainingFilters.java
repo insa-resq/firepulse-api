@@ -8,7 +8,6 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 public class FirefighterTrainingFilters {
-    private String firefighterId;
-    private String permitType; // "permitB", "permitC", "permitAircraft", etc.
-    private Boolean hasPermit; // true = a le permis, false = n'a pas le permis
+    private String firefighterId;   // SEULEMENT ce filtre
+    // SUPPRIMÉ: permitType et hasPermit
 }

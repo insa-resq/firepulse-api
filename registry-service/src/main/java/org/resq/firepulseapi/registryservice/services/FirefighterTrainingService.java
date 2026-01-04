@@ -21,38 +21,12 @@ public class FirefighterTrainingService {
                 .stream()
                 .map(FirefighterTrainingDto::fromEntity)
                 .filter(training -> {
-                    // Filtre par firefighterId
+                    // Filtre SEULEMENT par firefighterId
                     if (filters.getFirefighterId() != null && !filters.getFirefighterId().isEmpty()) {
-                        if (!training.getFirefighterId().equals(filters.getFirefighterId())) {
-                            return false;
-                        }
+                        return training.getFirefighterId().equals(filters.getFirefighterId());
                     }
 
-                    // Filtre par type de permis
-                    if (filters.getPermitType() != null && !filters.getPermitType().isEmpty()) {
-                        Boolean hasPermit = switch (filters.getPermitType().toLowerCase()) {
-                            case "permitb" -> training.getPermitB();
-                            case "permitc" -> training.getPermitC();
-                            case "permitaircraft" -> training.getPermitAircraft();
-                            case "suap" -> training.getSuap();
-                            case "inc" -> training.getInc();
-                            case "smallteamleader" -> training.getSmallTeamLeader();
-                            case "mediumteamleader" -> training.getMediumTeamLeader();
-                            case "largeteamleader" -> training.getLargeTeamLeader();
-                            default -> null;
-                        };
-
-                        if (hasPermit == null) return false;
-
-                        // Si hasPermit est spécifié, vérifier la valeur
-                        if (filters.getHasPermit() != null) {
-                            if (hasPermit != filters.getHasPermit()) {
-                                return false;
-                            }
-                        }
-                    }
-
-                    return true;
+                    return true; // Si pas de filtre, garde tout
                 })
                 .toList();
     }
