@@ -36,4 +36,12 @@ public class FireStationController {
         FireStationDto fireStation = fireStationService.getFireStationById(stationId);
         return ResponseEntity.ok(fireStation);
     }
+    
+    @DeleteMapping("/{stationId}")
+    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Delete a fire station by its ID")
+    public ResponseEntity<Void> deleteFireStation(@PathVariable String stationId) {
+        fireStationService.deleteFireStationById(stationId);
+        return ResponseEntity.noContent().build();
+    }
 }

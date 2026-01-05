@@ -35,6 +35,13 @@ public class FireStationService {
                 .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "Fire station not found"));
     }
 
+    public void deleteFireStationById(String stationId) {
+        if (!fireStationRepository.existsById(stationId)) {
+            throw new ApiException(HttpStatus.NOT_FOUND, "Fire station not found");
+        }
+        fireStationRepository.deleteById(stationId);
+    }
+
     private Specification<FireStation> buildSpecificationFromFilters(FireStationsFilters filters) {
         return (root, query, criteriaBuilder) -> {
             List<Predicate> predicates = new ArrayList<>();

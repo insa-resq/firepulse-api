@@ -34,4 +34,5 @@ public class VehicleController {
         VehicleDto vehicle = vehicleService.getVehicleById(vehicleId);
         return ResponseEntity.ok(vehicle);
     }
+
 }
