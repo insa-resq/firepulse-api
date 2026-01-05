@@ -41,4 +41,5 @@ public class FirefighterController {
         FirefighterDto firefighterDto = firefighterService.getFirefighterByUserId(userId);
         return ResponseEntity.ok(firefighterDto);
     }
+
 }
