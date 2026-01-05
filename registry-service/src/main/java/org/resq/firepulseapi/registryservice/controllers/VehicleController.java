@@ -35,32 +35,4 @@ public class VehicleController {
         return ResponseEntity.ok(vehicle);
     }
 
-    @GetMapping("/by-station/{stationId}")
-    @Operation(summary = "Get all vehicles for a specific station")
-    public ResponseEntity<List<VehicleDto>> getVehiclesByStation(@PathVariable String stationId) {
-        VehicleFilters filters = new VehicleFilters();
-        filters.setStationId(stationId);
-        List<VehicleDto> vehicles = vehicleService.getAllVehicles(filters);
-        return ResponseEntity.ok(vehicles);
-    }
-
-    @GetMapping("/by-station/{stationId}/type/{vehicleType}")
-    @Operation(summary = "Get vehicles of a specific type for a station")
-    public ResponseEntity<List<VehicleDto>> getVehiclesByStationAndType(
-            @PathVariable String stationId,
-            @PathVariable String vehicleType) {
-        VehicleFilters filters = new VehicleFilters();
-        filters.setStationId(stationId);
-
-        try {
-            filters.setType(org.resq.firepulseapi.registryservice.entities.enums.VehicleType.valueOf(vehicleType.toUpperCase()));
-        } catch (IllegalArgumentException e) {
-            // Retourne liste vide si type invalide
-            return ResponseEntity.ok(List.of());
-        }
-
-        List<VehicleDto> vehicles = vehicleService.getAllVehicles(filters);
-        return ResponseEntity.ok(vehicles);
-    }
-
 }
