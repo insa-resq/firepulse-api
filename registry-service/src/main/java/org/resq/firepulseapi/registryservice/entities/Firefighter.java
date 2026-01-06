@@ -47,7 +47,7 @@ public class Firefighter {
     private String userId;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @OnDelete(action = OnDeleteAction.RESTRICT)
+    @OnDelete(action = OnDeleteAction.CASCADE)
     @JoinColumn(name = "\"stationId\"", nullable = false)
     private FireStation station;
 
