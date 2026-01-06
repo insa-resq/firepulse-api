@@ -5,8 +5,6 @@ import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.ColumnDefault;
 import org.hibernate.annotations.JdbcTypeCode;
-import org.hibernate.annotations.OnDelete;
-import org.hibernate.annotations.OnDeleteAction;
 import org.hibernate.type.SqlTypes;
 import org.resq.firepulseapi.planningservice.entities.enums.Weekday;
 
@@ -48,10 +46,8 @@ public class AvailabilitySlot {
     @Column(name = "\"isAvailable\"", nullable = false)
     private Boolean isAvailable = false;
 
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @OnDelete(action = OnDeleteAction.CASCADE)
-    @JoinColumn(name = "\"firefighterId\"", nullable = false)
-    private Firefighter firefighter;
+    @Column(name = "\"firefighterId\"", nullable = false)
+    private String firefighterId;
 
     @PrePersist
     @PreUpdate

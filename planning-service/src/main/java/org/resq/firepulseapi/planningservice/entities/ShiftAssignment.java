@@ -44,10 +44,8 @@ public class ShiftAssignment {
     @Column(name = "\"shiftType\"", columnDefinition = "planning.\"ShiftType\"", nullable = false)
     private ShiftType shiftType;
 
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @OnDelete(action = OnDeleteAction.CASCADE)
-    @JoinColumn(name = "\"firefighterId\"", nullable = false)
-    private Firefighter firefighter;
+    @Column(name = "\"firefighterId\"", nullable = false)
+    private String firefighterId;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @OnDelete(action = OnDeleteAction.CASCADE)

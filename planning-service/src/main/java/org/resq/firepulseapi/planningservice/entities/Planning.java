@@ -4,8 +4,6 @@ import io.github.thibaultmeyer.cuid.CUID;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.ColumnDefault;
-import org.hibernate.annotations.OnDelete;
-import org.hibernate.annotations.OnDeleteAction;
 
 import java.time.Instant;
 import java.util.LinkedHashSet;
@@ -38,10 +36,8 @@ public class Planning {
     @Column(name = "\"weekNumber\"", nullable = false)
     private Integer weekNumber;
 
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @OnDelete(action = OnDeleteAction.CASCADE)
-    @JoinColumn(name = "\"stationId\"", nullable = false)
-    private FireStation station;
+    @Column(name = "\"stationId\"", nullable = false)
+    private String stationId;
 
     @OneToMany(mappedBy = "planning")
     private Set<ShiftAssignment> shiftAssignments = new LinkedHashSet<>();
