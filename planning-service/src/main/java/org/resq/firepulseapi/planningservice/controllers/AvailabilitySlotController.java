@@ -8,6 +8,7 @@ import org.resq.firepulseapi.planningservice.dtos.AvailabilitySlotDto;
 import org.resq.firepulseapi.planningservice.dtos.AvailabilitySlotUpdateDto;
 import org.resq.firepulseapi.planningservice.dtos.AvailabilitySlotsFilters;
 import org.resq.firepulseapi.planningservice.services.AvailabilitySlotService;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -48,7 +49,7 @@ public class AvailabilitySlotController {
                 userId,
                 availabilitySlotCreationDto
         );
-        return ResponseEntity.status(201).body(createdAvailabilitySlot);
+        return ResponseEntity.status(HttpStatus.CREATED).body(createdAvailabilitySlot);
     }
 
     @GetMapping("/{availabilitySlotId}")

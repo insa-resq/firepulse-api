@@ -88,6 +88,10 @@ public class AvailabilitySlotService {
         return (root, query, criteriaBuilder) -> {
             List<Predicate> predicates = new ArrayList<>();
 
+            if (filters.getFirefighterId() != null) {
+                predicates.add(criteriaBuilder.equal(root.get("firefighterId"), filters.getFirefighterId()));
+            }
+
             if (filters.getYear() != null) {
                 predicates.add(criteriaBuilder.equal(root.get("year"), filters.getYear()));
             }
@@ -98,10 +102,6 @@ public class AvailabilitySlotService {
 
             if (filters.getWeekday() != null) {
                 predicates.add(criteriaBuilder.equal(root.get("weekday"), filters.getWeekday()));
-            }
-
-            if (filters.getFirefighterId() != null) {
-                predicates.add(criteriaBuilder.equal(root.get("firefighterId"), filters.getFirefighterId()));
             }
 
             return criteriaBuilder.and(predicates.toArray(new Predicate[0]));

@@ -4,6 +4,9 @@ import io.github.thibaultmeyer.cuid.CUID;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.ColumnDefault;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
+import org.resq.firepulseapi.planningservice.entities.enums.PlanningStatus;
 
 import java.time.Instant;
 import java.util.LinkedHashSet;
@@ -35,6 +38,11 @@ public class Planning {
 
     @Column(name = "\"weekNumber\"", nullable = false)
     private Integer weekNumber;
+
+    @Enumerated(EnumType.STRING)
+    @JdbcTypeCode(SqlTypes.NAMED_ENUM)
+    @Column(name = "status", columnDefinition = "planning.\"PlanningStatus\"", nullable = false)
+    private PlanningStatus status;
 
     @Column(name = "\"stationId\"", nullable = false)
     private String stationId;
