@@ -55,7 +55,7 @@ public class FireAlertController {
     @PostMapping
     @PreAuthorize("hasRole('ADMIN')")
     @Operation(summary = "Create a fire alert")
-    public ResponseEntity<FireAlertDto> createFireAlerts(@Valid @RequestBody FireAlertCreationDto fireAlertCreationDto) {
+    public ResponseEntity<FireAlertDto> createFireAlert(@Valid @RequestBody FireAlertCreationDto fireAlertCreationDto) {
         FireAlertDto createdFireAlert = fireAlertService.createFireAlert(fireAlertCreationDto);
         return ResponseEntity.status(HttpStatus.CREATED).body(createdFireAlert);
     }

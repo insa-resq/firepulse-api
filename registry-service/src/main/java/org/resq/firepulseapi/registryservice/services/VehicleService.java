@@ -4,7 +4,6 @@ import jakarta.persistence.criteria.Predicate;
 import org.resq.firepulseapi.registryservice.dtos.VehicleDto;
 import org.resq.firepulseapi.registryservice.dtos.VehicleFilters;
 import org.resq.firepulseapi.registryservice.entities.Vehicle;
-import org.resq.firepulseapi.registryservice.entities.enums.VehicleType;
 import org.resq.firepulseapi.registryservice.exceptions.ApiException;
 import org.resq.firepulseapi.registryservice.repositories.VehicleRepository;
 import org.springframework.data.jpa.domain.Specification;

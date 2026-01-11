@@ -17,6 +17,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestTemplate;
@@ -220,7 +221,13 @@ public class PlanningService {
     }
 
     private void startPlanningGeneration(String planningId) {
-        restTemplate.postForEntity(planningEngineApiBaseUrl + "/planning/" + planningId + "/generate", null, Void.class);
+        ResponseEntity<?> response = restTemplate.postForEntity(
+                planningEngineApiBaseUrl + "/planning/" + planningId + "/generate",
+                null,
+                Object.class
+        );
+
+        logger.info("Planning generation started successfully for planning {}: {}", planningId, response.getBody());
     }
 
     private void ensureUserIsFromStation(String userId, String stationId) throws ApiException {

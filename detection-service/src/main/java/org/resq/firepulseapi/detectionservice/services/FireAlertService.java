@@ -9,10 +9,17 @@ import org.resq.firepulseapi.detectionservice.entities.enums.UserRole;
 import org.resq.firepulseapi.detectionservice.exceptions.ApiException;
 import org.resq.firepulseapi.detectionservice.repositories.FireAlertRepository;
 import org.resq.firepulseapi.detectionservice.repositories.ImageRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.client.RestTemplate;
+import tools.jackson.databind.node.JsonNodeFactory;
+import tools.jackson.databind.node.ObjectNode;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -22,12 +29,22 @@ import java.util.stream.Collectors;
 
 @Service
 public class FireAlertService {
+    private static final Logger logger = LoggerFactory.getLogger(FireAlertService.class);
     private final FireAlertRepository fireAlertRepository;
     private final ImageRepository imageRepository;
+    private final RestTemplate restTemplate;
 
-    public FireAlertService(FireAlertRepository fireAlertRepository, ImageRepository imageRepository) {
+    @Value("${http.coordination-team-api.base-url}")
+    private String coordinationTeamBaseUrl;
+
+    public FireAlertService(
+            FireAlertRepository fireAlertRepository,
+            ImageRepository imageRepository,
+            RestTemplate restTemplate
+    ) {
         this.fireAlertRepository = fireAlertRepository;
         this.imageRepository = imageRepository;
+        this.restTemplate = restTemplate;
     }
 
     public List<FireAlertDto> getFireAlerts(FireAlertsFilters filters) {
@@ -86,7 +103,27 @@ public class FireAlertService {
 
         FireAlert createdFireAlert = fireAlertRepository.save(fireAlert);
 
-        return FireAlertDto.fromEntity(createdFireAlert);
+        FireAlertDto fireAlertDto = FireAlertDto.fromEntity(createdFireAlert);
+
+        try {
+            ObjectNode fireAlertEventPayload = JsonNodeFactory.instance.objectNode()
+                    .put("latitude", fireAlertDto.getLatitude())
+                    .put("longitude", fireAlertDto.getLongitude())
+                    .put("severity", fireAlertDto.getSeverity().name())
+                    .put("type", "FIRE");
+
+            ResponseEntity<?> response = restTemplate.postForEntity(
+                    coordinationTeamBaseUrl + "/events",
+                    fireAlertEventPayload,
+                    Object.class
+            );
+
+            logger.info("Sent event to coordination team: {}", response.getBody());
+        } catch (Exception e) {
+            logger.error("Failed to send event to coordination team", e);
+        }
+
+        return fireAlertDto;
     }
 
     @Transactional
