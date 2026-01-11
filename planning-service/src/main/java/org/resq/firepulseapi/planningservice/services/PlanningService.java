@@ -86,6 +86,21 @@ public class PlanningService {
             ensureUserIsFromStation(userId, planningCreationDto.getStationId());
         }
 
+        Specification<Planning> specification = buildSpecificationFromFilters(
+                new PlanningsFilters(
+                        planningCreationDto.getYear(),
+                        planningCreationDto.getWeekNumber(),
+                        planningCreationDto.getStationId()
+                )
+        );
+
+        if (planningRepository.exists(specification)) {
+            throw new ApiException(
+                    HttpStatus.CONFLICT,
+                    "Planning already exists for the specified year, week number and station. Try regenerating it instead."
+            );
+        }
+
         Planning planning = new Planning();
         planning.setYear(planningCreationDto.getYear());
         planning.setWeekNumber(planningCreationDto.getWeekNumber());

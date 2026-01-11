@@ -47,10 +47,11 @@ public class AvailabilitySlotService {
                 )
         );
 
-        List<AvailabilitySlot> existingSlots = availabilitySlotRepository.findAll(specification);
-
-        if (!existingSlots.isEmpty()) {
-            throw new ApiException(HttpStatus.BAD_REQUEST, "Availability slot for the specified time period already exists");
+        if (availabilitySlotRepository.exists(specification)) {
+            throw new ApiException(
+                    HttpStatus.CONFLICT,
+                    "Availability slot already exists for the specified time period. Try updating it instead."
+            );
         }
 
         AvailabilitySlot availabilitySlot = new AvailabilitySlot();
