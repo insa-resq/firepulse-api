@@ -4,8 +4,12 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletResponse;
 import org.resq.firepulseapi.detectionservice.entities.enums.FileGroup;
+import org.resq.firepulseapi.detectionservice.exceptions.ApiException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.util.StreamUtils;
@@ -16,6 +20,7 @@ import org.springframework.web.client.RestTemplate;
 @RequestMapping("/files")
 @Tag(name = "Files Controller", description = "Endpoints for managing remote files")
 public class FilesController {
+    private static final Logger logger = LoggerFactory.getLogger(FilesController.class);
     private final RestTemplate restTemplate;
 
     @Value("${http.detection-engine-api.base-url}")
@@ -39,30 +44,35 @@ public class FilesController {
                 fileName
         );
 
-        restTemplate.execute(
-                remoteUrl,
-                HttpMethod.GET,
-                null,
-                (clientHttpResponse) -> {
-                    MediaType contentType = clientHttpResponse.getHeaders().getContentType();
-                    if (contentType != null) {
-                        response.setContentType(contentType.toString());
-                    }
+        try {
+            restTemplate.execute(
+                    remoteUrl,
+                    HttpMethod.GET,
+                    null,
+                    (clientHttpResponse) -> {
+                        MediaType contentType = clientHttpResponse.getHeaders().getContentType();
+                        if (contentType != null) {
+                            response.setContentType(contentType.toString());
+                        }
 
-                    long contentLength = clientHttpResponse.getHeaders().getContentLength();
-                    if (contentLength >= 0) {
-                        response.setContentLengthLong(contentLength);
-                    }
+                        long contentLength = clientHttpResponse.getHeaders().getContentLength();
+                        if (contentLength >= 0) {
+                            response.setContentLengthLong(contentLength);
+                        }
 
-                    String cacheControl = clientHttpResponse.getHeaders().getCacheControl();
-                    if (cacheControl != null) {
-                        response.setHeader("Cache-Control", cacheControl);
-                    }
+                        String cacheControl = clientHttpResponse.getHeaders().getCacheControl();
+                        if (cacheControl != null) {
+                            response.setHeader("Cache-Control", cacheControl);
+                        }
 
-                    StreamUtils.copy(clientHttpResponse.getBody(), response.getOutputStream());
+                        StreamUtils.copy(clientHttpResponse.getBody(), response.getOutputStream());
 
-                    return null;
-                });
+                        return null;
+                    });
+        } catch (Exception e) {
+            logger.error("Error retrieving file from remote URL: {}", remoteUrl, e);
+            throw new ApiException(HttpStatus.INTERNAL_SERVER_ERROR, "Unable to retrieve file");
+        }
 
         return ResponseEntity.ok().build();
     }

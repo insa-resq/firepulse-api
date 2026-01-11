@@ -12,6 +12,8 @@ import org.resq.firepulseapi.planningservice.entities.enums.UserRole;
 import org.resq.firepulseapi.planningservice.exceptions.ApiException;
 import org.resq.firepulseapi.planningservice.repositories.PlanningRepository;
 import org.resq.firepulseapi.planningservice.repositories.ShiftAssignmentRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.HttpStatus;
@@ -24,6 +26,7 @@ import java.util.List;
 
 @Service
 public class PlanningService {
+    private static final Logger logger = LoggerFactory.getLogger(PlanningService.class);
     private final PlanningRepository planningRepository;
     private final ShiftAssignmentRepository shiftAssignmentRepository;
     private final AccountsClient accountsClient;
@@ -91,11 +94,15 @@ public class PlanningService {
 
         Planning newPlanning = planningRepository.save(planning);
 
-        PlanningDto planningDto = PlanningDto.fromEntity(newPlanning);
+        try {
+            startPlanningGeneration(planning.getId());
+        } catch (Exception e) {
+            logger.error("Failed to start planning generation", e);
+            planningRepository.delete(newPlanning);
+            throw new ApiException(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to start planning generation");
+        }
 
-        startPlanningGeneration(planningDto.getId());
-
-        return planningDto;
+        return PlanningDto.fromEntity(newPlanning);
     }
 
     public PlanningDto updatePlanning(String planningId, PlanningUpdateDto planningUpdateDto) {
@@ -161,11 +168,16 @@ public class PlanningService {
 
         Planning updatedPlanning = planningRepository.save(planning);
 
-        PlanningDto planningDto = PlanningDto.fromEntity(updatedPlanning);
+        try {
+            startPlanningGeneration(planningId);
+        } catch (Exception e) {
+            logger.error("Failed to start planning generation", e);
+            planning.setStatus(PlanningStatus.FINALIZED);
+            planningRepository.save(planning);
+            throw new ApiException(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to start planning generation");
+        }
 
-        startPlanningGeneration(planningId);
-
-        return planningDto;
+        return PlanningDto.fromEntity(updatedPlanning);
     }
 
     public void deletePlanning(String userId, UserRole userRole, String planningId) {
