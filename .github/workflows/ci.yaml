@@ -45,6 +45,8 @@ jobs:
               - 'accounts-service/**'
             config-service:
               - 'config-service/**'
+            coordination-service:
+              - 'coordination-service/**'
             detection-service:
               - 'detection-service/**'
             discovery-service:
@@ -62,6 +64,7 @@ jobs:
           changed_services=()
           if [ "${{ steps.filter.outputs.all-services }}" = 'true' ] || [ "${{ steps.filter.outputs.accounts-service }}" = 'true' ]; then changed_services+=("accounts-service"); fi
           if [ "${{ steps.filter.outputs.all-services }}" = 'true' ] || [ "${{ steps.filter.outputs.config-service }}" = 'true' ]; then changed_services+=("config-service"); fi
+          if [ "${{ steps.filter.outputs.all-services }}" = 'true' ] || [ "${{ steps.filter.outputs.coordination-service }}" = 'true' ]; then changed_services+=("coordination-service"); fi
           if [ "${{ steps.filter.outputs.all-services }}" = 'true' ] || [ "${{ steps.filter.outputs.detection-service }}" = 'true' ]; then changed_services+=("detection-service"); fi
           if [ "${{ steps.filter.outputs.all-services }}" = 'true' ] || [ "${{ steps.filter.outputs.discovery-service }}" = 'true' ]; then changed_services+=("discovery-service"); fi
           if [ "${{ steps.filter.outputs.all-services }}" = 'true' ] || [ "${{ steps.filter.outputs.gateway-service }}" = 'true' ]; then changed_services+=("gateway-service"); fi

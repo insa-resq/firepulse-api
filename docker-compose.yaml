@@ -59,6 +59,41 @@ services:
       timeout: 5s
       retries: 5
 
+  coordination-service:
+    image: ghcr.io/insa-resq/firepulse-api/coordination-service:${IMAGE_TAG:-latest}
+    pull_policy: always
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        - SERVICE_NAME=coordination-service
+    container_name: firepulse-api-coordination-service
+    restart: always
+    deploy:
+      update_config:
+        failure_action: rollback
+    environment:
+      - CONFIG_SERVER_URI=http://config-service:8888
+      - EUREKA_SERVER_URI=http://discovery-service:8761/api/discovery-service/eureka/
+      - DATABASE_HOST=${DATABASE_HOST}
+      - DATABASE_NAME=${DATABASE_NAME}
+      - DATABASE_USER=${DATABASE_USER}
+      - DATABASE_PASSWORD=${DATABASE_PASSWORD}
+      - JWT_SECRET_KEY=${JWT_SECRET_KEY}
+    networks:
+      - firepulse_api
+    healthcheck:
+      test: [ "CMD", "wget", "-q", "-O-", "http://localhost:8080/actuator/health/readiness" ]
+      start_period: 75s
+      interval: 10s
+      timeout: 7s
+      retries: 5
+    depends_on:
+      config-service:
+        condition: service_healthy
+      discovery-service:
+        condition: service_healthy
+
   detection-service:
     image: ghcr.io/insa-resq/firepulse-api/detection-service:${IMAGE_TAG:-latest}
     pull_policy: always

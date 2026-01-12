@@ -9,6 +9,10 @@ services:
     image: firepulse-api-config-service
     pull_policy: never
 
+  coordination-service:
+    image: firepulse-api-coordination-service
+    pull_policy: never
+
   discovery-service:
     image: firepulse-api-discovery-service
     pull_policy: never

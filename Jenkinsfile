@@ -10,7 +10,7 @@ pipeline {
     }
 
     environment {
-        ALL_SERVICES = 'accounts-service,config-service,detection-service,discovery-service,gateway-service,planning-service,registry-service'
+        ALL_SERVICES = 'accounts-service,config-service,coordination-service,detection-service,discovery-service,gateway-service,planning-service,registry-service'
 
         DEPLOYMENT_SERVER = '192.168.10.46'
         DEPLOYMENT_DIRECTORY = '~/firepulse-api'
@@ -163,21 +163,22 @@ pipeline {
 // Helper function to calculate deployment order based on dependencies
 def calculateDeploymentOrder(services) {
     def depMap = [
-        'accounts-service': ['config-service', 'discovery-service'],
+        'accounts-service': ['config-service', 'discovery-service', 'registry-service'],
         'config-service': [],
+        'coordination-service': ['config-service', 'discovery-service', 'registry-service'],
         'discovery-service': ['config-service'],
         'detection-service': ['config-service', 'discovery-service'],
-        'gateway-service': ['config-service', 'discovery-service'],
-        'planning-service': ['config-service', 'discovery-service'],
+        'gateway-service': ['config-service', 'discovery-service', 'accounts-service', 'coordination-service', 'detection-service', 'planning-service', 'registry-service'],
+        'planning-service': ['config-service', 'discovery-service', 'accounts-service', 'registry-service'],
         'registry-service': ['config-service', 'discovery-service'],
     ]
 
-    def allServices = services as List
+    def servicesList = services as List
     def ordered = []
 
-    def servicesToInclude = allServices.clone().unique()
+    def servicesToInclude = servicesList.clone().unique()
 
-    def maxIterations = 10
+    def maxIterations = servicesToInclude.size() * servicesToInclude.size()
     def iteration = 0
 
     while (!servicesToInclude.isEmpty() && iteration < maxIterations) {
