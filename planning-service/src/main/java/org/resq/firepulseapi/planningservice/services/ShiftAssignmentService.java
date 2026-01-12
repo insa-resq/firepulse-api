@@ -63,7 +63,7 @@ public class ShiftAssignmentService {
             List<Predicate> predicates = new ArrayList<>();
 
             if (filters.getPlanningId() != null) {
-                predicates.add(criteriaBuilder.equal(root.get("planningId"), filters.getPlanningId()));
+                predicates.add(criteriaBuilder.equal(root.get("planning").get("id"), filters.getPlanningId()));
             }
 
             if (filters.getFirefighterId() != null) {
