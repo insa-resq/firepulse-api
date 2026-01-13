@@ -4,11 +4,12 @@ import org.resq.firepulseapi.coordinationservice.configurations.FeignClientConfi
 import org.resq.firepulseapi.coordinationservice.dtos.FireStationDto;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestHeader;
 
 import java.util.List;
 
 @FeignClient(name = "registry-service", configuration = FeignClientConfig.class)
 public interface RegistryClient {
     @GetMapping("/fire-stations")
-    List<FireStationDto> getFireStationById();
+    List<FireStationDto> getFireStations(@RequestHeader("Authorization") String authenticationHeaderValue);
 }
