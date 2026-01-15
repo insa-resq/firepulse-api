@@ -4,6 +4,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.resq.firepulseapi.registryservice.dtos.FireStationDto;
+import org.resq.firepulseapi.registryservice.dtos.FireStationOverviewDto;
 import org.resq.firepulseapi.registryservice.dtos.FireStationsFilters;
 import org.resq.firepulseapi.registryservice.services.FireStationService;
 import org.springframework.http.ResponseEntity;
@@ -36,7 +37,14 @@ public class FireStationController {
         FireStationDto fireStation = fireStationService.getFireStationById(stationId);
         return ResponseEntity.ok(fireStation);
     }
-    
+
+    @GetMapping("/{stationId}/overview")
+    @Operation(summary = "Get a fire station by its ID")
+    public ResponseEntity<FireStationOverviewDto> getFireStationOverview(@PathVariable String stationId) {
+        FireStationOverviewDto overview = fireStationService.getFireStationOverview(stationId);
+        return ResponseEntity.ok(overview);
+    }
+
     @DeleteMapping("/{stationId}")
     @PreAuthorize("hasRole('ADMIN')")
     @Operation(summary = "Delete a fire station by its ID")
