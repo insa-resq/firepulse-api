@@ -1,6 +1,7 @@
 package org.resq.firepulseapi.planningservice.dtos;
 
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.PositiveOrZero;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -23,6 +24,18 @@ public class PlanningFinalizationDto {
         private String firefighterId;
     }
 
+    @Data
+    @AllArgsConstructor
+    @NoArgsConstructor
+    public static class VehicleAvailabilityDto {
+        private String vehicleId;
+        @PositiveOrZero(message = "Available count must be zero or positive")
+        private Integer availableCount;
+    }
+
     @Size(min = 1, message = "At least one shift assignment is required")
     private List<@Valid ShiftAssignmentCreationDto> shiftAssignments;
+
+    @Size(min = 1, message = "At least one vehicle availability is required")
+    private List<@Valid VehicleAvailabilityDto> vehicleAvailabilities;
 }

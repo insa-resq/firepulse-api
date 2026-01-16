@@ -24,6 +24,9 @@ import org.springframework.web.client.RestTemplate;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Service
 public class PlanningService {
@@ -121,25 +124,73 @@ public class PlanningService {
         return PlanningDto.fromEntity(newPlanning);
     }
 
-    public PlanningDto updatePlanning(String planningId, PlanningUpdateDto planningUpdateDto) {
-        Planning planning = planningRepository.findById(planningId)
-                .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "Planning not found"));
-
-        if (planningUpdateDto.getStatus() != null) {
-            planning.setStatus(planningUpdateDto.getStatus());
-
-            Planning updatedPlanning = planningRepository.save(planning);
-
-            return PlanningDto.fromEntity(updatedPlanning);
-        }
-
-        return PlanningDto.fromEntity(planning);
-    }
-
     @Transactional
     public FinalizedPlanningDto finalizePlanning(String planningId, PlanningFinalizationDto planningFinalizationDto) {
         Planning planning = planningRepository.findById(planningId)
                 .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "Planning not found"));
+
+        Set<String> vehicleIdsSet = planningFinalizationDto.getVehicleAvailabilities()
+                .stream()
+                .map(PlanningFinalizationDto.VehicleAvailabilityDto::getVehicleId)
+                .collect(Collectors.toSet());
+
+        if (vehicleIdsSet.size() != planningFinalizationDto.getVehicleAvailabilities().size()) {
+            throw new ApiException(HttpStatus.BAD_REQUEST, "Duplicate vehicle IDs found in vehicle availabilities");
+        }
+
+        Map<String, VehicleDto> vehiclesMap = registryClient.getVehicles(planning.getStationId())
+                .stream()
+                .collect(Collectors.toMap(VehicleDto::getId, vehicle -> vehicle));
+
+        Set<String> fireStationVehiclesIds = vehiclesMap.keySet();
+
+        List<String> nonExistingVehicleIds = planningFinalizationDto.getVehicleAvailabilities()
+                .stream()
+                .map(PlanningFinalizationDto.VehicleAvailabilityDto::getVehicleId)
+                .filter(vehicleId -> !fireStationVehiclesIds.contains(vehicleId))
+                .toList();
+
+        if (!nonExistingVehicleIds.isEmpty()) {
+            throw new ApiException(HttpStatus.NOT_FOUND, "The following vehicles are not found: " + String.join(", ", nonExistingVehicleIds));
+        }
+
+        List<String> invalidVehicleAvailabilities = planningFinalizationDto.getVehicleAvailabilities()
+                .stream()
+                .filter(vehicleAvailabilityDto ->
+                        vehicleAvailabilityDto.getAvailableCount() >
+                                vehiclesMap.get(vehicleAvailabilityDto.getVehicleId()).getTotalCount()
+                )
+                .map(PlanningFinalizationDto.VehicleAvailabilityDto::getVehicleId)
+                .toList();
+
+        if (!invalidVehicleAvailabilities.isEmpty()) {
+            throw new ApiException(HttpStatus.BAD_REQUEST, "Vehicle availabilities exceed total counts for the following vehicles: " + String.join(", ", invalidVehicleAvailabilities));
+        }
+
+        Set<String> shiftAssignmentTriplets = planningFinalizationDto.getShiftAssignments()
+                .stream()
+                .map(dto -> dto.getFirefighterId() + "-" + dto.getWeekday() + "-" + dto.getShiftType())
+                .collect(Collectors.toSet());
+
+        if (shiftAssignmentTriplets.size() != planningFinalizationDto.getShiftAssignments().size()) {
+            throw new ApiException(HttpStatus.BAD_REQUEST, "Duplicate shift assignments found");
+        }
+
+        List<FirefighterDto> firefighters = registryClient.getFirefighters(planning.getStationId());
+
+        Set<String> fireStationFirefightersIds = firefighters.stream()
+                .map(FirefighterDto::getId)
+                .collect(Collectors.toSet());
+
+        List<String> nonExistingFirefighterIds = planningFinalizationDto.getShiftAssignments()
+                .stream()
+                .map(PlanningFinalizationDto.ShiftAssignmentCreationDto::getFirefighterId)
+                .filter(firefighterId -> !fireStationFirefightersIds.contains(firefighterId))
+                .toList();
+
+        if (!nonExistingFirefighterIds.isEmpty()) {
+            throw new ApiException(HttpStatus.NOT_FOUND, "The following firefighters are not found: " + String.join(", ", nonExistingFirefighterIds));
+        }
 
         List<ShiftAssignment> existingShiftAssignments = shiftAssignmentRepository.findByPlanningId(planningId);
 
@@ -160,6 +211,18 @@ public class PlanningService {
                 .toList();
 
         shiftAssignmentRepository.saveAll(newShiftAssignments);
+
+        registryClient.updateVehicles(
+                planningFinalizationDto.getVehicleAvailabilities()
+                        .stream()
+                        .map(dto -> {
+                            VehicleUpdateDto vehicleUpdateDto = new VehicleUpdateDto();
+                            vehicleUpdateDto.setVehicleId(dto.getVehicleId());
+                            vehicleUpdateDto.setAvailableCount(dto.getAvailableCount());
+                            return vehicleUpdateDto;
+                        })
+                        .toList()
+        );
 
         planning.setStatus(PlanningStatus.FINALIZED);
 

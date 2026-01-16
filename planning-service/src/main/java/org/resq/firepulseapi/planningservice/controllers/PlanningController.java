@@ -65,17 +65,6 @@ public class PlanningController {
         return ResponseEntity.status(HttpStatus.CREATED).body(planning);
     }
 
-    @PatchMapping("/{planningId}")
-    @PreAuthorize("hasRole('ADMIN')")
-    @Operation(summary = "Update a planning by its ID (admin only)")
-    public ResponseEntity<PlanningDto> updatePlanningById(
-            @PathVariable String planningId,
-            @Valid @RequestBody PlanningUpdateDto planningUpdateDto
-    ) {
-        PlanningDto planning = planningService.updatePlanning(planningId, planningUpdateDto);
-        return ResponseEntity.ok(planning);
-    }
-
     @PostMapping("/{planningId}/finalize")
     @PreAuthorize("hasRole('ADMIN')")
     @Operation(summary = "Finalize a planning by its ID")

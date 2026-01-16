@@ -5,6 +5,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.resq.firepulseapi.registryservice.dtos.VehicleDto;
 import org.resq.firepulseapi.registryservice.dtos.VehicleFilters;
+import org.resq.firepulseapi.registryservice.dtos.VehicleUpdateDto;
 import org.resq.firepulseapi.registryservice.services.VehicleService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -35,4 +36,10 @@ public class VehicleController {
         return ResponseEntity.ok(vehicle);
     }
 
+    @PatchMapping
+    @Operation(summary = "Update vehicle information in batch")
+    public ResponseEntity<List<VehicleDto>> updateVehicles(@Valid @RequestBody List<VehicleUpdateDto> vehicleUpdateDtos) {
+        List<VehicleDto> updatedVehicles = vehicleService.updateVehicles(vehicleUpdateDtos);
+        return ResponseEntity.ok(updatedVehicles);
+    }
 }

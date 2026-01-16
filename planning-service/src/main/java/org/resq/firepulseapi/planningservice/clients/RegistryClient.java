@@ -1,12 +1,13 @@
 package org.resq.firepulseapi.planningservice.clients;
 
+import jakarta.validation.Valid;
 import org.resq.firepulseapi.planningservice.configurations.FeignClientConfig;
 import org.resq.firepulseapi.planningservice.dtos.FireStationDto;
 import org.resq.firepulseapi.planningservice.dtos.FirefighterDto;
+import org.resq.firepulseapi.planningservice.dtos.VehicleDto;
+import org.resq.firepulseapi.planningservice.dtos.VehicleUpdateDto;
 import org.springframework.cloud.openfeign.FeignClient;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
@@ -17,4 +18,10 @@ public interface RegistryClient {
 
     @GetMapping("/firefighters")
     List<FirefighterDto> getFirefighters(@RequestParam String stationId);
+
+    @GetMapping("/vehicles")
+    List<VehicleDto> getVehicles(@RequestParam String stationId);
+
+    @PatchMapping("/vehicles")
+    List<VehicleDto> updateVehicles(@Valid List<VehicleUpdateDto> vehicleUpdateDtos);
 }
