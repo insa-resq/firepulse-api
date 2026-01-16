@@ -58,10 +58,15 @@ public class UserService {
         return UserDto.fromEntity(newUser);
     }
 
-    public UserDto getUserById(String userId) {
-        return userRepository.findById(userId)
-                .map(UserDto::fromEntity)
+    public UserDto getUserById(String authenticatedUserId, UserRole authenticatedUserRole, String userId) {
+        User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "User not found"));
+
+        if (authenticatedUserRole != null && authenticatedUserRole != UserRole.ADMIN && !authenticatedUserId.equals(userId)) {
+            throw new ApiException(HttpStatus.FORBIDDEN, "You are not authorized to access this user's information");
+        }
+
+        return UserDto.fromEntity(user);
     }
 
     public List<UserDto> getAllUsers(UsersFilters filters) {

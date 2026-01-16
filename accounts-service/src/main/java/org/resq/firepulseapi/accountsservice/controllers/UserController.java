@@ -3,10 +3,12 @@ package org.resq.firepulseapi.accountsservice.controllers;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import org.resq.firepulseapi.accountsservice.annotations.AuthenticatedUserRole;
 import org.resq.firepulseapi.accountsservice.dtos.UserDto;
 import org.resq.firepulseapi.accountsservice.dtos.UserProfileUpdateDto;
 import org.resq.firepulseapi.accountsservice.dtos.UserStationUpdateDto;
 import org.resq.firepulseapi.accountsservice.dtos.UsersFilters;
+import org.resq.firepulseapi.accountsservice.entities.enums.UserRole;
 import org.resq.firepulseapi.accountsservice.services.UserService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -30,7 +32,7 @@ public class UserController {
     @Operation(summary = "Get the authenticated user's profile")
     public ResponseEntity<UserDto> getAuthenticatedUserProfile(@AuthenticationPrincipal Jwt jwt) {
         String userId = jwt.getSubject();
-        UserDto userDto = userService.getUserById(userId);
+        UserDto userDto = userService.getUserById(userId, null, userId);
         return ResponseEntity.ok(userDto);
     }
 
@@ -51,6 +53,18 @@ public class UserController {
     public ResponseEntity<List<UserDto>> getAllUsers(@Valid @ModelAttribute UsersFilters filters) {
         List<UserDto> users = userService.getAllUsers(filters);
         return ResponseEntity.ok(users);
+    }
+
+    @GetMapping("/{userId}")
+    @Operation(summary = "Get a user by ID")
+    public ResponseEntity<UserDto> getUserById(
+            @AuthenticationPrincipal Jwt jwt,
+            @AuthenticatedUserRole UserRole authenticatedUserRole,
+            @PathVariable String userId
+    ) {
+        String authenticatedUserId = jwt.getSubject();
+        UserDto userDto = userService.getUserById(authenticatedUserId, authenticatedUserRole, userId);
+        return ResponseEntity.ok(userDto);
     }
 
     @PatchMapping("/{userId}")

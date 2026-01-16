@@ -37,4 +37,17 @@ public class ShiftAssignmentController {
         List<ShiftAssignmentDto> shiftAssignments = shiftAssignmentService.getShiftAssignments(userId, userRole, filters);
         return ResponseEntity.ok(shiftAssignments);
     }
+
+    @GetMapping("detailed")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('PLANNING_MANAGER')")
+    @Operation(summary = "Get detailed shift assignments with optional filters")
+    public ResponseEntity<List<DetailedShiftAssignmentDto>> getDetailedShiftAssignments(
+            @AuthenticationPrincipal Jwt jwt,
+            @AuthenticatedUserRole UserRole userRole,
+            @Valid @ModelAttribute ShiftAssignmentsFilters filters
+    ) {
+        String userId = jwt.getSubject();
+        List<DetailedShiftAssignmentDto> detailedShiftAssignments = shiftAssignmentService.getDetailedShiftAssignments(userId, userRole, filters);
+        return ResponseEntity.ok(detailedShiftAssignments);
+    }
 }
