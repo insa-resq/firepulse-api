@@ -28,7 +28,7 @@ public class SecurityConfig {
     private final String[] PUBLIC_ROUTES = new String[] {
             "/actuator/**",
             "/docs/**",
-            "/coordination/**"
+            "/fire-stations/**"
     };
 
     private final AuthenticationEntryPoint authenticationEntryPoint;

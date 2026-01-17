@@ -63,7 +63,7 @@ public class VehicleService {
         }
 
         List<Vehicle> updatedVehicles = vehicleUpdateDtos.stream()
-                .filter(dto -> dto.getTotalCount() != null || dto.getAvailableCount() != null)
+                .filter(dto -> dto.getTotalCount() != null || dto.getAvailableCount() != null || dto.getBookedCount() != null)
                 .map(dto -> {
                     Vehicle vehicle = vehiclesMap.get(dto.getVehicleId());
                     if (dto.getTotalCount() != null) {
@@ -71,6 +71,9 @@ public class VehicleService {
                     }
                     if (dto.getAvailableCount() != null) {
                         vehicle.setAvailableCount(dto.getAvailableCount());
+                    }
+                    if (dto.getBookedCount() != null) {
+                        vehicle.setBookedCount(dto.getBookedCount());
                     }
                     return vehicle;
                 })

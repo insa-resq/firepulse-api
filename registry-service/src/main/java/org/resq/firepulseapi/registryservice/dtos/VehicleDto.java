@@ -18,6 +18,7 @@ public class VehicleDto {
     private VehicleType type;
     private Integer totalCount;
     private Integer availableCount;
+    private Integer bookedCount;
     private String stationId;
 
     public static VehicleDto fromEntity(Vehicle vehicle) {
@@ -28,6 +29,7 @@ public class VehicleDto {
         dto.setType(vehicle.getType());
         dto.setTotalCount(vehicle.getTotalCount());
         dto.setAvailableCount(vehicle.getAvailableCount());
+        dto.setBookedCount(vehicle.getBookedCount());
         dto.setStationId(vehicle.getStation() != null ? vehicle.getStation().getId() : null);
         return dto;
     }

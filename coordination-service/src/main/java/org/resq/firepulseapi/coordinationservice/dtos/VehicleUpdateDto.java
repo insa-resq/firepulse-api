@@ -1,4 +1,4 @@
-package org.resq.firepulseapi.registryservice.dtos;
+package org.resq.firepulseapi.coordinationservice.dtos;
 
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;

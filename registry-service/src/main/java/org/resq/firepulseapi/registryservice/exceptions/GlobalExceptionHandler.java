@@ -39,55 +39,57 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
 
             if (error.isBindingFailure()) {
                 try {
-                    // 1. Get the class of the DTO
                     Object target = ex.getBindingResult().getTarget();
                     Class<?> targetClass = (target != null) ? target.getClass() : null;
 
                     if (targetClass != null) {
-                        // 2. Find the field in the class
-                        Field field = targetClass.getDeclaredField(error.getField());
+                        String fieldPath = error.getField();
+                        Class<?> currentClass = targetClass;
+                        ResolvableType currentType = ResolvableType.forClass(targetClass);
 
-                        // 3. Resolve the type using Spring's utility
-                        ResolvableType resolvableType = ResolvableType.forField(field);
-                        Class<?> resolvedClass = resolvableType.resolve();
-
-                        if (resolvedClass != null) {
-                            Class<?> enumType = null;
-
-                            // Case A: It's a direct Enum
-                            if (resolvedClass.isEnum()) {
-                                enumType = resolvedClass;
+                        // If the target is a List, try to find the DTO class from the generic type
+                        if (Collection.class.isAssignableFrom(targetClass)) {
+                            ResolvableType genericType = ResolvableType.forInstance(target).getGeneric(0);
+                            if (genericType != ResolvableType.NONE) {
+                                currentType = genericType;
+                                currentClass = currentType.resolve();
                             }
-                            // Case B: It's a Collection/List of Enums
-                            else if (Collection.class.isAssignableFrom(resolvedClass)) {
-                                // Extract the Generic argument (the content of the list)
-                                Class<?> genericType = resolvableType.getGeneric(0).resolve();
-                                if (genericType != null && genericType.isEnum()) {
-                                    enumType = genericType;
-                                }
+                        }
+
+                        // Handle nested field paths like "vehicles[0].type" or "address.city"
+                        String[] parts = fieldPath.split("\\.");
+                        for (String part : parts) {
+                            if (currentClass == null) break;
+
+                            // Handle indexed fields like "vehicles[0]"
+                            String fieldName = part.replaceAll("\\[\\d+\\]", "");
+                            Field field = currentClass.getDeclaredField(fieldName);
+                            currentType = ResolvableType.forField(field);
+                            currentClass = currentType.resolve();
+
+                            // If it's a collection, move to the element type
+                            if (currentClass != null && Collection.class.isAssignableFrom(currentClass)) {
+                                currentType = currentType.getGeneric(0);
+                                currentClass = currentType.resolve();
                             }
+                        }
 
-                            // 4. Generate the message if we found an Enum
-                            if (enumType != null) {
-                                List<String> allowedValues = Arrays.stream(enumType.getEnumConstants())
-                                        .map(Object::toString)
-                                        .collect(Collectors.toList());
+                        if (currentClass != null && currentClass.isEnum()) {
+                            List<String> allowedValues = Arrays.stream(currentClass.getEnumConstants())
+                                    .map(Object::toString)
+                                    .collect(Collectors.toList());
 
-                                // Clean up the rejected value (remove brackets if Spring added them)
-                                String rejectedFieldValue = String.valueOf(error.getRejectedValue());
+                            String rejectedFieldValue = String.valueOf(error.getRejectedValue());
+                            List<String> wrongValues = Arrays.stream(rejectedFieldValue.split(","))
+                                    .map(String::trim)
+                                    .filter(val -> !allowedValues.contains(val))
+                                    .collect(Collectors.toList());
 
-                                // Split rejectedValue by comma and take the elements not matching allowed values
-                                List<String> wrongValues = Arrays.stream(rejectedFieldValue.split(","))
-                                        .map(String::trim)
-                                        .filter(val -> !allowedValues.contains(val))
-                                        .collect(Collectors.toList());
-
-                                message = String.format(
-                                        "Invalid values [%s]. Allowed values are: [%s]",
-                                        String.join(", ", wrongValues),
-                                        String.join(", ", allowedValues)
-                                );
-                            }
+                            message = String.format(
+                                    "Invalid values [%s]. Allowed values are: [%s]",
+                                    String.join(", ", wrongValues),
+                                    String.join(", ", allowedValues)
+                            );
                         }
                     }
                 } catch (Exception e) {

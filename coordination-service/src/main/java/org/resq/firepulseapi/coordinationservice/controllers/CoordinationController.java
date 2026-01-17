@@ -2,19 +2,18 @@ package org.resq.firepulseapi.coordinationservice.controllers;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
+import org.resq.firepulseapi.coordinationservice.dtos.FireStationBookingDto;
+import org.resq.firepulseapi.coordinationservice.dtos.FireStationDroppingDto;
 import org.resq.firepulseapi.coordinationservice.dtos.FireStationOverviewDto;
 import org.resq.firepulseapi.coordinationservice.services.CoordinationService;
 import org.resq.firepulseapi.coordinationservice.dtos.FireStationDto;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
 @RestController
-@RequestMapping("/coordination")
 @Tag(name = "Coordination Controller", description = "Endpoints for coordination team")
 public class CoordinationController {
     private final CoordinationService coordinationService;
@@ -35,5 +34,19 @@ public class CoordinationController {
     public ResponseEntity<FireStationOverviewDto> getFireStationOverview(@PathVariable String stationId) {
         FireStationOverviewDto overview = coordinationService.getFireStationOverview(stationId);
         return ResponseEntity.ok(overview);
+    }
+
+    @PostMapping("/fire-stations/book")
+    @Operation(summary = "Book vehicles from fire stations")
+    public ResponseEntity<Void> bookVehicles(@Valid @RequestBody List<@Valid FireStationBookingDto> fireStationBookingDtos) {
+        coordinationService.bookVehicles(fireStationBookingDtos);
+        return ResponseEntity.noContent().build();
+    }
+
+    @PostMapping("/fire-stations/drop")
+    @Operation(summary = "Drop vehicles back to fire stations")
+    public ResponseEntity<Void> dropVehicles(@Valid @RequestBody List<@Valid FireStationDroppingDto> fireStationDroppingDtos) {
+        coordinationService.dropVehicles(fireStationDroppingDtos);
+        return ResponseEntity.noContent().build();
     }
 }

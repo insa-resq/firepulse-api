@@ -60,6 +60,10 @@
             <version>${cuid.version}</version>
         </dependency>
         <dependency>
+            <groupId>io.github.openfeign</groupId>
+            <artifactId>feign-hc5</artifactId>
+        </dependency>
+        <dependency>
             <groupId>org.postgresql</groupId>
             <artifactId>postgresql</artifactId>
             <scope>runtime</scope>

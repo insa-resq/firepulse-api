@@ -42,6 +42,10 @@ public class Vehicle {
     @Column(name = "\"availableCount\"", nullable = false)
     private Integer availableCount;
 
+    @ColumnDefault("0")
+    @Column(name = "\"bookedCount\"", nullable = false)
+    private Integer bookedCount;
+
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @OnDelete(action = OnDeleteAction.CASCADE)
     @JoinColumn(name = "\"stationId\"", nullable = false)

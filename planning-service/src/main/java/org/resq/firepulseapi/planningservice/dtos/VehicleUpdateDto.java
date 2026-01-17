@@ -13,4 +13,5 @@ public class VehicleUpdateDto {
     private String vehicleId;
     private Integer totalCount;
     private Integer availableCount;
+    private Integer bookedCount;
 }

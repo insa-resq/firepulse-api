@@ -1,6 +1,5 @@
 package org.resq.firepulseapi.planningservice.clients;
 
-import jakarta.validation.Valid;
 import org.resq.firepulseapi.planningservice.configurations.FeignClientConfig;
 import org.resq.firepulseapi.planningservice.dtos.FireStationDto;
 import org.resq.firepulseapi.planningservice.dtos.FirefighterDto;
@@ -23,5 +22,5 @@ public interface RegistryClient {
     List<VehicleDto> getVehicles(@RequestParam String stationId);
 
     @PatchMapping("/vehicles")
-    List<VehicleDto> updateVehicles(@Valid List<VehicleUpdateDto> vehicleUpdateDtos);
+    List<VehicleDto> updateVehicles(@RequestBody List<VehicleUpdateDto> vehicleUpdateDtos);
 }

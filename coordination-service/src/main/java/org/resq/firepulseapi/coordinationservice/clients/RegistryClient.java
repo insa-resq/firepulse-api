@@ -2,11 +2,10 @@ package org.resq.firepulseapi.coordinationservice.clients;
 
 import org.resq.firepulseapi.coordinationservice.configurations.FeignClientConfig;
 import org.resq.firepulseapi.coordinationservice.dtos.FireStationDto;
-import org.resq.firepulseapi.coordinationservice.dtos.FireStationOverviewDto;
+import org.resq.firepulseapi.coordinationservice.dtos.VehicleDto;
+import org.resq.firepulseapi.coordinationservice.dtos.VehicleUpdateDto;
 import org.springframework.cloud.openfeign.FeignClient;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestHeader;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
@@ -15,6 +14,12 @@ public interface RegistryClient {
     @GetMapping("/fire-stations")
     List<FireStationDto> getFireStations(@RequestHeader("Authorization") String authenticationHeaderValue);
 
-    @GetMapping("/fire-stations/{stationId}/overview")
-    FireStationOverviewDto getFireStationOverview(@RequestHeader("Authorization") String authenticationHeaderValue, @PathVariable String stationId);
+    @GetMapping("/fire-stations/{stationId}")
+    FireStationDto getFireStationById(@RequestHeader("Authorization") String authenticationHeaderValue, @PathVariable String stationId);
+
+    @GetMapping("/vehicles")
+    List<VehicleDto> getVehicles(@RequestHeader("Authorization") String authenticationHeaderValue, @RequestParam String stationId);
+
+    @PatchMapping("/vehicles")
+    List<VehicleDto> updateVehicles(@RequestHeader("Authorization") String authenticationHeaderValue, @RequestBody List<VehicleUpdateDto> vehicleUpdateDtos);
 }

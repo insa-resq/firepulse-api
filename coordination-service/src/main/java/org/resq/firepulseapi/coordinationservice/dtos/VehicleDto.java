@@ -1,9 +1,9 @@
-package org.resq.firepulseapi.planningservice.dtos;
+package org.resq.firepulseapi.coordinationservice.dtos;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.resq.firepulseapi.planningservice.entities.enums.VehicleType;
+import org.resq.firepulseapi.coordinationservice.entities.enums.VehicleType;
 
 import java.time.Instant;
 

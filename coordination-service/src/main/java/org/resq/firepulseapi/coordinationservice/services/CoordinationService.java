@@ -3,10 +3,8 @@ package org.resq.firepulseapi.coordinationservice.services;
 import feign.FeignException;
 import org.resq.firepulseapi.coordinationservice.clients.AccountsClient;
 import org.resq.firepulseapi.coordinationservice.clients.RegistryClient;
-import org.resq.firepulseapi.coordinationservice.dtos.FireStationDto;
-import org.resq.firepulseapi.coordinationservice.dtos.FireStationOverviewDto;
-import org.resq.firepulseapi.coordinationservice.dtos.LoginDto;
-import org.resq.firepulseapi.coordinationservice.dtos.TokenDto;
+import org.resq.firepulseapi.coordinationservice.dtos.*;
+import org.resq.firepulseapi.coordinationservice.entities.enums.VehicleType;
 import org.resq.firepulseapi.coordinationservice.exceptions.ApiException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -15,7 +13,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.Callable;
+import java.util.stream.Collectors;
 
 @Service
 public class CoordinationService {
@@ -42,10 +42,91 @@ public class CoordinationService {
     public FireStationOverviewDto getFireStationOverview(String stationId) {
         return executeWithAuthentication(() -> {
             try {
-                return registryClient.getFireStationOverview(authenticationHeaderValue, stationId);
+                registryClient.getFireStationById(authenticationHeaderValue, stationId);
             } catch (FeignException.NotFound e) {
                 throw new ApiException(HttpStatus.NOT_FOUND, "Fire station not found");
             }
+
+            List<VehicleDto> vehicles = registryClient.getVehicles(authenticationHeaderValue, stationId);
+
+            return new FireStationOverviewDto(
+                    vehicles.stream()
+                            .filter(vehicleDto -> vehicleDto.getAvailableCount() > vehicleDto.getBookedCount())
+                            .map(vehicleDto -> new FireStationOverviewDto.AvailableVehicleDto(
+                                    vehicleDto.getType(),
+                                    vehicleDto.getAvailableCount() - vehicleDto.getBookedCount()
+                            )).toList()
+            );
+        });
+    }
+
+    public void bookVehicles(List<FireStationBookingDto> fireStationBookingDtos) {
+        executeWithAuthentication(() -> {
+            fireStationBookingDtos.forEach(dto -> {
+                Map<VehicleType, VehicleDto> fireStationVehiclesMap =
+                        registryClient.getVehicles(authenticationHeaderValue, dto.getStationId())
+                                .stream()
+                                .collect(Collectors.toMap(VehicleDto::getType, vehicleDto -> vehicleDto));
+
+                List<VehicleUpdateDto> vehicleUpdateDtos = dto.getVehicles()
+                        .stream()
+                        .map(bookingDto -> {
+                            VehicleDto vehicleDto = fireStationVehiclesMap.get(bookingDto.getType());
+
+                            if (vehicleDto == null) {
+                                throw new ApiException(HttpStatus.NOT_FOUND, "Vehicle type " + bookingDto.getType() + " not found at station " + dto.getStationId());
+                            }
+
+                            if (vehicleDto.getAvailableCount() < vehicleDto.getBookedCount() + bookingDto.getBookedCount()) {
+                                throw new ApiException(HttpStatus.BAD_REQUEST, "Not enough vehicles of type " + bookingDto.getType() + " available at station " + dto.getStationId());
+                            }
+
+                            VehicleUpdateDto updateDto = new VehicleUpdateDto();
+                            updateDto.setVehicleId(vehicleDto.getId());
+                            updateDto.setBookedCount(vehicleDto.getBookedCount() + bookingDto.getBookedCount());
+                            return updateDto;
+                        })
+                        .toList();
+
+                registryClient.updateVehicles(authenticationHeaderValue, vehicleUpdateDtos);
+            });
+
+            return null;
+        });
+    }
+
+    public void dropVehicles(List<FireStationDroppingDto> fireStationDroppingDtos) {
+        executeWithAuthentication(() -> {
+            fireStationDroppingDtos.forEach(dto -> {
+                Map<VehicleType, VehicleDto> fireStationVehiclesMap =
+                        registryClient.getVehicles(authenticationHeaderValue, dto.getStationId())
+                                .stream()
+                                .collect(Collectors.toMap(VehicleDto::getType, vehicleDto -> vehicleDto));
+
+                List<VehicleUpdateDto> vehicleUpdateDtos = dto.getVehicles()
+                        .stream()
+                        .map(droppingDto -> {
+                            VehicleDto vehicleDto = fireStationVehiclesMap.get(droppingDto.getType());
+
+                            if (vehicleDto == null) {
+                                throw new ApiException(HttpStatus.NOT_FOUND, "Vehicle type " + droppingDto.getType() + " not found at station " + dto.getStationId());
+                            }
+
+                            if (vehicleDto.getBookedCount() < droppingDto.getDroppedCount()) {
+                                throw new ApiException(HttpStatus.BAD_REQUEST, "Cannot drop more vehicles of type " + droppingDto.getType() + " than are booked at station " + dto.getStationId());
+                            }
+
+                            VehicleUpdateDto updateDto = new VehicleUpdateDto();
+                            updateDto.setVehicleId(vehicleDto.getId());
+                            updateDto.setBookedCount(vehicleDto.getBookedCount() - droppingDto.getDroppedCount());
+                            return updateDto;
+                        })
+                        .toList();
+
+                registryClient.updateVehicles(authenticationHeaderValue, vehicleUpdateDtos);
+            });
+
+            return null;
         });
     }
 

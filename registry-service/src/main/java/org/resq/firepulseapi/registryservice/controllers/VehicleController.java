@@ -23,7 +23,7 @@ public class VehicleController {
     }
 
     @GetMapping
-    @Operation(summary = "Get a list of all vehicles")
+    @Operation(summary = "Get a list of all vehicles with optional filters")
     public ResponseEntity<List<VehicleDto>> getAllVehicles(@Valid @ModelAttribute VehicleFilters filters) {
         List<VehicleDto> vehicles = vehicleService.getAllVehicles(filters);
         return ResponseEntity.ok(vehicles);
@@ -38,7 +38,7 @@ public class VehicleController {
 
     @PatchMapping
     @Operation(summary = "Update vehicle information in batch")
-    public ResponseEntity<List<VehicleDto>> updateVehicles(@Valid @RequestBody List<VehicleUpdateDto> vehicleUpdateDtos) {
+    public ResponseEntity<List<VehicleDto>> updateVehicles(@Valid @RequestBody List<@Valid VehicleUpdateDto> vehicleUpdateDtos) {
         List<VehicleDto> updatedVehicles = vehicleService.updateVehicles(vehicleUpdateDtos);
         return ResponseEntity.ok(updatedVehicles);
     }
