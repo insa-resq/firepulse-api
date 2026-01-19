@@ -227,6 +227,7 @@ public class PlanningService {
                     vehicleAvailability.setVehicleId(dto.getVehicleId());
                     vehicleAvailability.setWeekday(dto.getWeekday());
                     vehicleAvailability.setAvailableCount(dto.getAvailableCount());
+                    vehicleAvailability.setBookedCount(0);
                     return vehicleAvailability;
                 })
                 .toList();
