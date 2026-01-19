@@ -9,5 +9,5 @@ import java.util.Collection;
 
 @Repository
 public interface VehicleAvailabilityRepository extends JpaRepository<VehicleAvailability, String>, JpaSpecificationExecutor<VehicleAvailability> {
-    void deleteAllByVehicleIdIn(Collection<String> vehicleIds);
+    void deleteByVehicleIdIn(Collection<String> vehicleIds);
 }
