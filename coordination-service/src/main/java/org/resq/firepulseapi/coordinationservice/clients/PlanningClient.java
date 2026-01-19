@@ -12,7 +12,7 @@ import java.util.List;
 @FeignClient(name = "planning-service", configuration = FeignClientConfig.class)
 public interface PlanningClient {
     @GetMapping("/vehicle-availabilities")
-    List<VehicleAvailabilityDto> getVehicleAvailabilities(@RequestHeader("Authorization") String authenticationHeaderValue, @RequestParam String vehicleId, @RequestParam Weekday weekday);
+    List<VehicleAvailabilityDto> getVehicleAvailabilities(@RequestHeader("Authorization") String authenticationHeaderValue, @RequestParam List<String> vehicleIds, @RequestParam Weekday weekday);
 
     @PatchMapping("/vehicle-availabilities")
     List<VehicleAvailabilityDto> updateVehicleAvailabilities(@RequestHeader("Authorization") String authenticationHeaderValue, @RequestBody List<VehicleAvailabilityUpdateDto> vehicleAvailabilityUpdateDtos);

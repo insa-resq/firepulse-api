@@ -5,10 +5,12 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.resq.firepulseapi.planningservice.entities.enums.Weekday;
 
+import java.util.List;
+
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
 public class VehicleAvailabilitiesFilters {
     private Weekday weekday;
-    private String vehicleId;
+    private List<String> vehicleIds;
 }

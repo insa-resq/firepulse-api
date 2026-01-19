@@ -15,10 +15,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.concurrent.Callable;
 import java.util.stream.Collectors;
 
@@ -54,23 +52,27 @@ public class CoordinationService {
                 throw new ApiException(HttpStatus.NOT_FOUND, "Fire station not found");
             }
 
-            List<VehicleDto> vehicles = registryClient.getVehicles(authenticationHeaderValue, stationId);
-
-            List<FireStationOverviewDto.AvailableVehicleDto> availableVehicleDtos = new ArrayList<>();
+            Map<String, VehicleDto> vehiclesMap = registryClient.getVehicles(authenticationHeaderValue, stationId)
+                    .stream()
+                    .collect(Collectors.toMap(VehicleDto::getId, vehicleDto -> vehicleDto));
 
             Weekday currentWeekday = getCurrentWeekday();
 
-            vehicles.forEach(vehicleDto -> {
-                Optional<VehicleAvailabilityDto> vehicleAvailabilityDto = planningClient.getVehicleAvailabilities(authenticationHeaderValue, vehicleDto.getId(), currentWeekday)
-                        .stream()
-                        .findFirst();
-                if (vehicleAvailabilityDto.isPresent()) {
-                    FireStationOverviewDto.AvailableVehicleDto availableVehicleDto = new FireStationOverviewDto.AvailableVehicleDto();
-                    availableVehicleDto.setType(vehicleDto.getType());
-                    availableVehicleDto.setCount(vehicleAvailabilityDto.get().getAvailableCount() - vehicleAvailabilityDto.get().getBookedCount());
-                    availableVehicleDtos.add(availableVehicleDto);
-                }
-            });
+            List<VehicleAvailabilityDto> vehicleAvailabilitiesMap = planningClient.getVehicleAvailabilities(
+                    authenticationHeaderValue,
+                    vehiclesMap.keySet().stream().toList(),
+                    currentWeekday
+            );
+
+            List<FireStationOverviewDto.AvailableVehicleDto> availableVehicleDtos =
+                    vehicleAvailabilitiesMap.stream()
+                            .map(vaDto -> {
+                                FireStationOverviewDto.AvailableVehicleDto availableVehicleDto = new FireStationOverviewDto.AvailableVehicleDto();
+                                availableVehicleDto.setType(vehiclesMap.get(vaDto.getVehicleId()).getType());
+                                availableVehicleDto.setCount(vaDto.getAvailableCount() - vaDto.getBookedCount());
+                                return availableVehicleDto;
+                            })
+                            .toList();
 
             return new FireStationOverviewDto(availableVehicleDtos);
         });
@@ -87,9 +89,11 @@ public class CoordinationService {
                                 .collect(Collectors.toMap(VehicleDto::getType, vehicleDto -> vehicleDto));
 
                 Map<String, VehicleAvailabilityDto> vehicleAvailabilitiesMap =
-                        fireStationVehiclesMap.values()
-                                .stream()
-                                .flatMap(vehicleDto -> planningClient.getVehicleAvailabilities(authenticationHeaderValue, vehicleDto.getId(), currentWeekday).stream())
+                        planningClient.getVehicleAvailabilities(
+                                authenticationHeaderValue,
+                                fireStationVehiclesMap.values().stream().map(VehicleDto::getId).toList(),
+                                currentWeekday
+                        ).stream()
                                 .collect(Collectors.toMap(VehicleAvailabilityDto::getVehicleId, vaDto -> vaDto));
 
                 List<VehicleAvailabilityUpdateDto> vehicleAvailabilityUpdateDtos = dto.getVehicles()
@@ -132,9 +136,11 @@ public class CoordinationService {
                                 .collect(Collectors.toMap(VehicleDto::getType, vehicleDto -> vehicleDto));
 
                 Map<String, VehicleAvailabilityDto> vehicleAvailabilitiesMap =
-                        fireStationVehiclesMap.values()
-                                .stream()
-                                .flatMap(vehicleDto -> planningClient.getVehicleAvailabilities(authenticationHeaderValue, vehicleDto.getId(), currentWeekday).stream())
+                        planningClient.getVehicleAvailabilities(
+                                authenticationHeaderValue,
+                                fireStationVehiclesMap.values().stream().map(VehicleDto::getId).toList(),
+                                currentWeekday
+                        ).stream()
                                 .collect(Collectors.toMap(VehicleAvailabilityDto::getVehicleId, vaDto -> vaDto));
 
                 List<VehicleAvailabilityUpdateDto> vehicleAvailabilityUpdateDtos = dto.getVehicles()

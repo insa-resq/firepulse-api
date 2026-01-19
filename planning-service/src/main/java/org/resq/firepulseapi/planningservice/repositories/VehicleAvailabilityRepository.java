@@ -6,8 +6,9 @@ import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.stereotype.Repository;
 
 import java.util.Collection;
+import java.util.List;
 
 @Repository
 public interface VehicleAvailabilityRepository extends JpaRepository<VehicleAvailability, String>, JpaSpecificationExecutor<VehicleAvailability> {
-    void deleteByVehicleIdIn(Collection<String> vehicleIds);
+    List<VehicleAvailability> findByVehicleIdIn(Collection<String> vehicleIds);
 }

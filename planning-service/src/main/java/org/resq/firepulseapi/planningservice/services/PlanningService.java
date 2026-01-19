@@ -206,8 +206,6 @@ public class PlanningService {
             throw new ApiException(HttpStatus.NOT_FOUND, "The following firefighters are not found: " + String.join(", ", nonExistingFirefighterIds));
         }
 
-        List<ShiftAssignment> existingShiftAssignments = shiftAssignmentRepository.findByPlanningId(planningId);
-
         List<ShiftAssignment> newShiftAssignments = planningFinalizationDto.getShiftAssignments()
                 .stream()
                 .map((dto) -> {
@@ -232,15 +230,21 @@ public class PlanningService {
                 })
                 .toList();
 
+        List<ShiftAssignment> existingShiftAssignments = shiftAssignmentRepository.findByPlanningId(planningId);
+
+        List<VehicleAvailability> existingVehicleAvailabilities = vehicleAvailabilityRepository.findByVehicleIdIn(vehicleWeekdaysMap.keySet());
+
         if (!existingShiftAssignments.isEmpty()) {
             shiftAssignmentRepository.deleteAllInBatch(existingShiftAssignments);
         }
 
-        shiftAssignmentRepository.saveAll(newShiftAssignments);
+        if (!existingVehicleAvailabilities.isEmpty()) {
+            vehicleAvailabilityRepository.deleteAllInBatch(existingVehicleAvailabilities);
+        }
 
-        vehicleAvailabilityRepository.deleteByVehicleIdIn(vehicleWeekdaysMap.keySet());
+        List<ShiftAssignment> createdShiftAssignments = shiftAssignmentRepository.saveAll(newShiftAssignments);
 
-        vehicleAvailabilityRepository.saveAll(newVehicleAvailabilities);
+        List<VehicleAvailability> createdVehicleAvailabilities = vehicleAvailabilityRepository.saveAll(newVehicleAvailabilities);
 
         planning.setStatus(PlanningStatus.FINALIZED);
 
@@ -248,7 +252,16 @@ public class PlanningService {
 
         FinalizedPlanningDto finalizedPlanningDto = new FinalizedPlanningDto();
         finalizedPlanningDto.setPlanning(PlanningDto.fromEntity(updatedPlanning));
-        finalizedPlanningDto.setShiftAssignments(new ArrayList<>());
+        finalizedPlanningDto.setShiftAssignments(
+                createdShiftAssignments.stream()
+                        .map(ShiftAssignmentDto::fromEntity)
+                        .toList()
+        );
+        finalizedPlanningDto.setVehicleAvailabilities(
+                createdVehicleAvailabilities.stream()
+                        .map(VehicleAvailabilityDto::fromEntity)
+                        .toList()
+        );
 
         return finalizedPlanningDto;
     }

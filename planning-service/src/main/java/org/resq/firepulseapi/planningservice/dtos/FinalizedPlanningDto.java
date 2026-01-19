@@ -12,4 +12,5 @@ import java.util.List;
 public class FinalizedPlanningDto {
     private PlanningDto planning;
     private List<ShiftAssignmentDto> shiftAssignments;
+    private List<VehicleAvailabilityDto> vehicleAvailabilities;
 }

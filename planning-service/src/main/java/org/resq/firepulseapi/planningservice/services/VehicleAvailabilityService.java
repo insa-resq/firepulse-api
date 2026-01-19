@@ -67,8 +67,8 @@ public class VehicleAvailabilityService {
         return (root, query, criteriaBuilder) -> {
             List<Predicate> predicates = new ArrayList<>();
 
-            if (filters.getVehicleId() != null) {
-                predicates.add(criteriaBuilder.equal(root.get("vehicleId"), filters.getVehicleId()));
+            if (filters.getVehicleIds() != null && !filters.getVehicleIds().isEmpty()) {
+                predicates.add(root.get("vehicleId").in(filters.getVehicleIds()));
             }
 
             if (filters.getWeekday() != null) {
