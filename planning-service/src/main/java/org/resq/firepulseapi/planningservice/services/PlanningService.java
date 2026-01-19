@@ -237,7 +237,11 @@ public class PlanningService {
 
         shiftAssignmentRepository.saveAll(newShiftAssignments);
 
-        vehicleAvailabilityRepository.deleteAllByVehicleIdIn(vehicleIdsSet);
+        vehicleAvailabilityRepository.deleteAllByVehicleIdIn(
+                newVehicleAvailabilities.stream()
+                        .map(VehicleAvailability::getVehicleId)
+                        .collect(Collectors.toSet())
+        );
 
         vehicleAvailabilityRepository.saveAll(newVehicleAvailabilities);
 
