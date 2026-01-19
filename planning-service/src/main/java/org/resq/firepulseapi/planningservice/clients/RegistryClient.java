@@ -4,7 +4,6 @@ import org.resq.firepulseapi.planningservice.configurations.FeignClientConfig;
 import org.resq.firepulseapi.planningservice.dtos.FireStationDto;
 import org.resq.firepulseapi.planningservice.dtos.FirefighterDto;
 import org.resq.firepulseapi.planningservice.dtos.VehicleDto;
-import org.resq.firepulseapi.planningservice.dtos.VehicleUpdateDto;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.*;
 
@@ -20,7 +19,4 @@ public interface RegistryClient {
 
     @GetMapping("/vehicles")
     List<VehicleDto> getVehicles(@RequestParam String stationId);
-
-    @PatchMapping("/vehicles")
-    List<VehicleDto> updateVehicles(@RequestBody List<VehicleUpdateDto> vehicleUpdateDtos);
 }

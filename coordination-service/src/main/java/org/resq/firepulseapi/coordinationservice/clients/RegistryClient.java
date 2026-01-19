@@ -3,7 +3,6 @@ package org.resq.firepulseapi.coordinationservice.clients;
 import org.resq.firepulseapi.coordinationservice.configurations.FeignClientConfig;
 import org.resq.firepulseapi.coordinationservice.dtos.FireStationDto;
 import org.resq.firepulseapi.coordinationservice.dtos.VehicleDto;
-import org.resq.firepulseapi.coordinationservice.dtos.VehicleUpdateDto;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.*;
 
@@ -19,7 +18,4 @@ public interface RegistryClient {
 
     @GetMapping("/vehicles")
     List<VehicleDto> getVehicles(@RequestHeader("Authorization") String authenticationHeaderValue, @RequestParam String stationId);
-
-    @PatchMapping("/vehicles")
-    List<VehicleDto> updateVehicles(@RequestHeader("Authorization") String authenticationHeaderValue, @RequestBody List<VehicleUpdateDto> vehicleUpdateDtos);
 }

@@ -1,11 +1,12 @@
-package org.resq.firepulseapi.registryservice.entities;
+package org.resq.firepulseapi.planningservice.entities;
 
 import io.github.thibaultmeyer.cuid.CUID;
 import jakarta.persistence.*;
 import lombok.*;
-import org.hibernate.annotations.*;
+import org.hibernate.annotations.ColumnDefault;
+import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
-import org.resq.firepulseapi.registryservice.entities.enums.VehicleType;
+import org.resq.firepulseapi.planningservice.entities.enums.Weekday;
 
 import java.time.Instant;
 
@@ -15,11 +16,10 @@ import java.time.Instant;
 @Setter
 @ToString(onlyExplicitlyIncluded = true)
 @Entity
-@Table(name = "\"Vehicle\"", schema = "registry", indexes = {
-        @Index(name = "Vehicle_type_idx", columnList = "type"),
-        @Index(name = "Vehicle_stationId_idx", columnList = "stationId")
+@Table(name = "\"VehicleAvailability\"", schema = "planning", indexes = {
+        @Index(name = "VehicleAvailability_vehicleId_weekday_key", columnList = "vehicleId, weekday", unique = true)
 })
-public class Vehicle {
+public class VehicleAvailability {
     @Id
     @Column(name = "id", nullable = false, updatable = false, length = Integer.MAX_VALUE)
     private String id = String.valueOf(CUID.randomCUID2());
@@ -33,16 +33,19 @@ public class Vehicle {
 
     @Enumerated(EnumType.STRING)
     @JdbcTypeCode(SqlTypes.NAMED_ENUM)
-    @Column(name = "type", columnDefinition = "registry.\"VehicleType\"", nullable = false)
-    private VehicleType type;
+    @Column(name = "weekday", columnDefinition = "registry.\"Weekday\"", nullable = false)
+    private Weekday weekday;
 
-    @Column(name = "\"totalCount\"", nullable = false)
-    private Integer totalCount;
+    @ColumnDefault("0")
+    @Column(name = "\"availableCount\"", nullable = false)
+    private Integer availableCount;
 
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @OnDelete(action = OnDeleteAction.CASCADE)
-    @JoinColumn(name = "\"stationId\"", nullable = false)
-    private FireStation station;
+    @ColumnDefault("0")
+    @Column(name = "\"bookedCount\"", nullable = false)
+    private Integer bookedCount;
+
+    @Column(name = "\"vehicleId\"", nullable = false)
+    private String vehicleId;
 
     @PrePersist
     @PreUpdate

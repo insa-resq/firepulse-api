@@ -16,7 +16,5 @@ public class VehicleDto {
     private Instant updatedAt;
     private VehicleType type;
     private Integer totalCount;
-    private Integer availableCount;
-    private Integer bookedCount;
     private String stationId;
 }

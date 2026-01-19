@@ -169,7 +169,7 @@ def calculateDeploymentOrder(services) {
     def depMap = [
         'accounts-service': ['config-service', 'discovery-service', 'registry-service'],
         'config-service': [],
-        'coordination-service': ['config-service', 'discovery-service', 'registry-service'],
+        'coordination-service': ['config-service', 'discovery-service', 'accounts-service', 'planning-service', 'registry-service'],
         'discovery-service': ['config-service'],
         'detection-service': ['config-service', 'discovery-service'],
         'gateway-service': ['config-service', 'discovery-service', 'accounts-service', 'coordination-service', 'detection-service', 'planning-service', 'registry-service'],

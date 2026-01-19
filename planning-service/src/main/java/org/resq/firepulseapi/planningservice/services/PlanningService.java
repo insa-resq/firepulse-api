@@ -7,11 +7,14 @@ import org.resq.firepulseapi.planningservice.clients.RegistryClient;
 import org.resq.firepulseapi.planningservice.dtos.*;
 import org.resq.firepulseapi.planningservice.entities.Planning;
 import org.resq.firepulseapi.planningservice.entities.ShiftAssignment;
+import org.resq.firepulseapi.planningservice.entities.VehicleAvailability;
 import org.resq.firepulseapi.planningservice.entities.enums.PlanningStatus;
 import org.resq.firepulseapi.planningservice.entities.enums.UserRole;
+import org.resq.firepulseapi.planningservice.entities.enums.Weekday;
 import org.resq.firepulseapi.planningservice.exceptions.ApiException;
 import org.resq.firepulseapi.planningservice.repositories.PlanningRepository;
 import org.resq.firepulseapi.planningservice.repositories.ShiftAssignmentRepository;
+import org.resq.firepulseapi.planningservice.repositories.VehicleAvailabilityRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -33,6 +36,7 @@ public class PlanningService {
     private static final Logger logger = LoggerFactory.getLogger(PlanningService.class);
     private final PlanningRepository planningRepository;
     private final ShiftAssignmentRepository shiftAssignmentRepository;
+    private final VehicleAvailabilityRepository vehicleAvailabilityRepository;
     private final AccountsClient accountsClient;
     private final RegistryClient registryClient;
     private final RestTemplate restTemplate;
@@ -43,12 +47,14 @@ public class PlanningService {
     public PlanningService(
             PlanningRepository planningRepository,
             ShiftAssignmentRepository shiftAssignmentRepository,
+            VehicleAvailabilityRepository vehicleAvailabilityRepository,
             AccountsClient accountsClient,
             RegistryClient registryClient,
             RestTemplate restTemplate
     ) {
         this.planningRepository = planningRepository;
         this.shiftAssignmentRepository = shiftAssignmentRepository;
+        this.vehicleAvailabilityRepository = vehicleAvailabilityRepository;
         this.accountsClient = accountsClient;
         this.registryClient = registryClient;
         this.restTemplate = restTemplate;
@@ -131,12 +137,25 @@ public class PlanningService {
 
         Set<String> vehicleIdsSet = planningFinalizationDto.getVehicleAvailabilities()
                 .stream()
-                .map(PlanningFinalizationDto.VehicleAvailabilityDto::getVehicleId)
+                .map(PlanningFinalizationDto.VehicleAvailabilityCreationDto::getVehicleId)
                 .collect(Collectors.toSet());
 
         if (vehicleIdsSet.size() != planningFinalizationDto.getVehicleAvailabilities().size()) {
             throw new ApiException(HttpStatus.BAD_REQUEST, "Duplicate vehicle IDs found in vehicle availabilities");
         }
+
+        Map<String, Set<Weekday>> vehicleWeekdaysMap = planningFinalizationDto.getVehicleAvailabilities()
+                .stream()
+                .collect(Collectors.groupingBy(
+                        PlanningFinalizationDto.VehicleAvailabilityCreationDto::getVehicleId,
+                        Collectors.mapping(PlanningFinalizationDto.VehicleAvailabilityCreationDto::getWeekday, Collectors.toSet())
+                ));
+
+        vehicleWeekdaysMap.forEach((vehicleId, weekdays) -> {
+            if (weekdays.size() != Weekday.values().length) {
+                throw new ApiException(HttpStatus.BAD_REQUEST, "Vehicle ID " + vehicleId + " does not have availabilities for all weekdays");
+            }
+        });
 
         Map<String, VehicleDto> vehiclesMap = registryClient.getVehicles(planning.getStationId())
                 .stream()
@@ -146,7 +165,7 @@ public class PlanningService {
 
         List<String> nonExistingVehicleIds = planningFinalizationDto.getVehicleAvailabilities()
                 .stream()
-                .map(PlanningFinalizationDto.VehicleAvailabilityDto::getVehicleId)
+                .map(PlanningFinalizationDto.VehicleAvailabilityCreationDto::getVehicleId)
                 .filter(vehicleId -> !fireStationVehiclesIds.contains(vehicleId))
                 .toList();
 
@@ -160,7 +179,7 @@ public class PlanningService {
                         vehicleAvailabilityDto.getAvailableCount() >
                                 vehiclesMap.get(vehicleAvailabilityDto.getVehicleId()).getTotalCount()
                 )
-                .map(PlanningFinalizationDto.VehicleAvailabilityDto::getVehicleId)
+                .map(PlanningFinalizationDto.VehicleAvailabilityCreationDto::getVehicleId)
                 .toList();
 
         if (!invalidVehicleAvailabilities.isEmpty()) {
@@ -194,10 +213,6 @@ public class PlanningService {
 
         List<ShiftAssignment> existingShiftAssignments = shiftAssignmentRepository.findByPlanningId(planningId);
 
-        if (!existingShiftAssignments.isEmpty()) {
-            shiftAssignmentRepository.deleteAllInBatch(existingShiftAssignments);
-        }
-
         List<ShiftAssignment> newShiftAssignments = planningFinalizationDto.getShiftAssignments()
                 .stream()
                 .map((dto) -> {
@@ -210,19 +225,26 @@ public class PlanningService {
                 })
                 .toList();
 
+        List<VehicleAvailability> newVehicleAvailabilities = planningFinalizationDto.getVehicleAvailabilities()
+                .stream()
+                .map((dto) -> {
+                    VehicleAvailability vehicleAvailability = new VehicleAvailability();
+                    vehicleAvailability.setVehicleId(dto.getVehicleId());
+                    vehicleAvailability.setWeekday(dto.getWeekday());
+                    vehicleAvailability.setAvailableCount(dto.getAvailableCount());
+                    return vehicleAvailability;
+                })
+                .toList();
+
+        if (!existingShiftAssignments.isEmpty()) {
+            shiftAssignmentRepository.deleteAllInBatch(existingShiftAssignments);
+        }
+
         shiftAssignmentRepository.saveAll(newShiftAssignments);
 
-        registryClient.updateVehicles(
-                planningFinalizationDto.getVehicleAvailabilities()
-                        .stream()
-                        .map(dto -> {
-                            VehicleUpdateDto vehicleUpdateDto = new VehicleUpdateDto();
-                            vehicleUpdateDto.setVehicleId(dto.getVehicleId());
-                            vehicleUpdateDto.setAvailableCount(dto.getAvailableCount());
-                            return vehicleUpdateDto;
-                        })
-                        .toList()
-        );
+        vehicleAvailabilityRepository.deleteAllByVehicleIdIn(vehicleIdsSet);
+
+        vehicleAvailabilityRepository.saveAll(newVehicleAvailabilities);
 
         planning.setStatus(PlanningStatus.FINALIZED);
 

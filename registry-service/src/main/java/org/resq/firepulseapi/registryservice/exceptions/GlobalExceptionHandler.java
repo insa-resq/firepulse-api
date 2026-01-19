@@ -45,7 +45,7 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
                     if (targetClass != null) {
                         String fieldPath = error.getField();
                         Class<?> currentClass = targetClass;
-                        ResolvableType currentType = ResolvableType.forClass(targetClass);
+                        ResolvableType currentType;
 
                         // If the target is a List, try to find the DTO class from the generic type
                         if (Collection.class.isAssignableFrom(targetClass)) {
@@ -62,7 +62,7 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
                             if (currentClass == null) break;
 
                             // Handle indexed fields like "vehicles[0]"
-                            String fieldName = part.replaceAll("\\[\\d+\\]", "");
+                            String fieldName = part.replaceAll("\\[\\d+]", "");
                             Field field = currentClass.getDeclaredField(fieldName);
                             currentType = ResolvableType.forField(field);
                             currentClass = currentType.resolve();

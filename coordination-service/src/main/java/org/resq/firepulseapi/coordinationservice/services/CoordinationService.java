@@ -2,9 +2,11 @@ package org.resq.firepulseapi.coordinationservice.services;
 
 import feign.FeignException;
 import org.resq.firepulseapi.coordinationservice.clients.AccountsClient;
+import org.resq.firepulseapi.coordinationservice.clients.PlanningClient;
 import org.resq.firepulseapi.coordinationservice.clients.RegistryClient;
 import org.resq.firepulseapi.coordinationservice.dtos.*;
 import org.resq.firepulseapi.coordinationservice.entities.enums.VehicleType;
+import org.resq.firepulseapi.coordinationservice.entities.enums.Weekday;
 import org.resq.firepulseapi.coordinationservice.exceptions.ApiException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -12,8 +14,11 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.Callable;
 import java.util.stream.Collectors;
 
@@ -22,6 +27,7 @@ public class CoordinationService {
     private static final Logger logger = LoggerFactory.getLogger(CoordinationService.class);
     private final AccountsClient accountsClient;
     private final RegistryClient registryClient;
+    private final PlanningClient planningClient;
     private static String authenticationHeaderValue;
 
     @Value("${http.internal.admin-email}")
@@ -30,9 +36,10 @@ public class CoordinationService {
     @Value("${http.internal.admin-password}")
     private String adminPassword;
 
-    public CoordinationService(AccountsClient accountsClient, RegistryClient registryClient) {
+    public CoordinationService(AccountsClient accountsClient, RegistryClient registryClient, PlanningClient planningClient) {
         this.accountsClient = accountsClient;
         this.registryClient = registryClient;
+        this.planningClient = planningClient;
     }
 
     public List<FireStationDto> getAllFireStations() {
@@ -49,26 +56,43 @@ public class CoordinationService {
 
             List<VehicleDto> vehicles = registryClient.getVehicles(authenticationHeaderValue, stationId);
 
-            return new FireStationOverviewDto(
-                    vehicles.stream()
-                            .filter(vehicleDto -> vehicleDto.getAvailableCount() > vehicleDto.getBookedCount())
-                            .map(vehicleDto -> new FireStationOverviewDto.AvailableVehicleDto(
-                                    vehicleDto.getType(),
-                                    vehicleDto.getAvailableCount() - vehicleDto.getBookedCount()
-                            )).toList()
-            );
+            List<FireStationOverviewDto.AvailableVehicleDto> availableVehicleDtos = new ArrayList<>();
+
+            Weekday currentWeekday = getCurrentWeekday();
+
+            vehicles.forEach(vehicleDto -> {
+                Optional<VehicleAvailabilityDto> vehicleAvailabilityDto = planningClient.getVehicleAvailabilities(authenticationHeaderValue, vehicleDto.getId(), currentWeekday)
+                        .stream()
+                        .findFirst();
+                if (vehicleAvailabilityDto.isPresent()) {
+                    FireStationOverviewDto.AvailableVehicleDto availableVehicleDto = new FireStationOverviewDto.AvailableVehicleDto();
+                    availableVehicleDto.setType(vehicleDto.getType());
+                    availableVehicleDto.setCount(vehicleAvailabilityDto.get().getAvailableCount() - vehicleAvailabilityDto.get().getBookedCount());
+                    availableVehicleDtos.add(availableVehicleDto);
+                }
+            });
+
+            return new FireStationOverviewDto(availableVehicleDtos);
         });
     }
 
     public void bookVehicles(List<FireStationBookingDto> fireStationBookingDtos) {
         executeWithAuthentication(() -> {
+            Weekday currentWeekday = getCurrentWeekday();
+
             fireStationBookingDtos.forEach(dto -> {
                 Map<VehicleType, VehicleDto> fireStationVehiclesMap =
                         registryClient.getVehicles(authenticationHeaderValue, dto.getStationId())
                                 .stream()
                                 .collect(Collectors.toMap(VehicleDto::getType, vehicleDto -> vehicleDto));
 
-                List<VehicleUpdateDto> vehicleUpdateDtos = dto.getVehicles()
+                Map<String, VehicleAvailabilityDto> vehicleAvailabilitiesMap =
+                        fireStationVehiclesMap.values()
+                                .stream()
+                                .flatMap(vehicleDto -> planningClient.getVehicleAvailabilities(authenticationHeaderValue, vehicleDto.getId(), currentWeekday).stream())
+                                .collect(Collectors.toMap(VehicleAvailabilityDto::getVehicleId, vaDto -> vaDto));
+
+                List<VehicleAvailabilityUpdateDto> vehicleAvailabilityUpdateDtos = dto.getVehicles()
                         .stream()
                         .map(bookingDto -> {
                             VehicleDto vehicleDto = fireStationVehiclesMap.get(bookingDto.getType());
@@ -77,18 +101,20 @@ public class CoordinationService {
                                 throw new ApiException(HttpStatus.NOT_FOUND, "Vehicle type " + bookingDto.getType() + " not found at station " + dto.getStationId());
                             }
 
-                            if (vehicleDto.getAvailableCount() < vehicleDto.getBookedCount() + bookingDto.getBookedCount()) {
+                            VehicleAvailabilityDto vehicleAvailabilityDto = vehicleAvailabilitiesMap.get(vehicleDto.getId());
+
+                            if (vehicleAvailabilityDto.getAvailableCount() < vehicleAvailabilityDto.getBookedCount() + bookingDto.getBookedCount()) {
                                 throw new ApiException(HttpStatus.BAD_REQUEST, "Not enough vehicles of type " + bookingDto.getType() + " available at station " + dto.getStationId());
                             }
 
-                            VehicleUpdateDto updateDto = new VehicleUpdateDto();
-                            updateDto.setVehicleId(vehicleDto.getId());
-                            updateDto.setBookedCount(vehicleDto.getBookedCount() + bookingDto.getBookedCount());
+                            VehicleAvailabilityUpdateDto updateDto = new VehicleAvailabilityUpdateDto();
+                            updateDto.setAvailabilityId(vehicleAvailabilityDto.getId());
+                            updateDto.setBookedCount(vehicleAvailabilityDto.getBookedCount() + bookingDto.getBookedCount());
                             return updateDto;
                         })
                         .toList();
 
-                registryClient.updateVehicles(authenticationHeaderValue, vehicleUpdateDtos);
+                planningClient.updateVehicleAvailabilities(authenticationHeaderValue, vehicleAvailabilityUpdateDtos);
             });
 
             return null;
@@ -97,13 +123,21 @@ public class CoordinationService {
 
     public void dropVehicles(List<FireStationDroppingDto> fireStationDroppingDtos) {
         executeWithAuthentication(() -> {
+            Weekday currentWeekday = getCurrentWeekday();
+
             fireStationDroppingDtos.forEach(dto -> {
                 Map<VehicleType, VehicleDto> fireStationVehiclesMap =
                         registryClient.getVehicles(authenticationHeaderValue, dto.getStationId())
                                 .stream()
                                 .collect(Collectors.toMap(VehicleDto::getType, vehicleDto -> vehicleDto));
 
-                List<VehicleUpdateDto> vehicleUpdateDtos = dto.getVehicles()
+                Map<String, VehicleAvailabilityDto> vehicleAvailabilitiesMap =
+                        fireStationVehiclesMap.values()
+                                .stream()
+                                .flatMap(vehicleDto -> planningClient.getVehicleAvailabilities(authenticationHeaderValue, vehicleDto.getId(), currentWeekday).stream())
+                                .collect(Collectors.toMap(VehicleAvailabilityDto::getVehicleId, vaDto -> vaDto));
+
+                List<VehicleAvailabilityUpdateDto> vehicleAvailabilityUpdateDtos = dto.getVehicles()
                         .stream()
                         .map(droppingDto -> {
                             VehicleDto vehicleDto = fireStationVehiclesMap.get(droppingDto.getType());
@@ -112,22 +146,28 @@ public class CoordinationService {
                                 throw new ApiException(HttpStatus.NOT_FOUND, "Vehicle type " + droppingDto.getType() + " not found at station " + dto.getStationId());
                             }
 
-                            if (vehicleDto.getBookedCount() < droppingDto.getDroppedCount()) {
+                            VehicleAvailabilityDto vehicleAvailabilityDto = vehicleAvailabilitiesMap.get(vehicleDto.getId());
+
+                            if (vehicleAvailabilityDto.getBookedCount() < droppingDto.getDroppedCount()) {
                                 throw new ApiException(HttpStatus.BAD_REQUEST, "Cannot drop more vehicles of type " + droppingDto.getType() + " than are booked at station " + dto.getStationId());
                             }
 
-                            VehicleUpdateDto updateDto = new VehicleUpdateDto();
-                            updateDto.setVehicleId(vehicleDto.getId());
-                            updateDto.setBookedCount(vehicleDto.getBookedCount() - droppingDto.getDroppedCount());
+                            VehicleAvailabilityUpdateDto updateDto = new VehicleAvailabilityUpdateDto();
+                            updateDto.setAvailabilityId(vehicleAvailabilityDto.getId());
+                            updateDto.setBookedCount(vehicleAvailabilityDto.getBookedCount() - droppingDto.getDroppedCount());
                             return updateDto;
                         })
                         .toList();
 
-                registryClient.updateVehicles(authenticationHeaderValue, vehicleUpdateDtos);
+                planningClient.updateVehicleAvailabilities(authenticationHeaderValue, vehicleAvailabilityUpdateDtos);
             });
 
             return null;
         });
+    }
+
+    private Weekday getCurrentWeekday() {
+        return Weekday.values()[LocalDate.now().getDayOfWeek().getValue() - 1];
     }
 
     private <T> T executeWithAuthentication(Callable<T> action) throws ApiException {
