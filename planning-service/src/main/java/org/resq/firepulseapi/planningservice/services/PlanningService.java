@@ -135,15 +135,6 @@ public class PlanningService {
         Planning planning = planningRepository.findById(planningId)
                 .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "Planning not found"));
 
-        Set<String> vehicleIdsSet = planningFinalizationDto.getVehicleAvailabilities()
-                .stream()
-                .map(PlanningFinalizationDto.VehicleAvailabilityCreationDto::getVehicleId)
-                .collect(Collectors.toSet());
-
-        if (vehicleIdsSet.size() != planningFinalizationDto.getVehicleAvailabilities().size()) {
-            throw new ApiException(HttpStatus.BAD_REQUEST, "Duplicate vehicle IDs found in vehicle availabilities");
-        }
-
         Map<String, Set<Weekday>> vehicleWeekdaysMap = planningFinalizationDto.getVehicleAvailabilities()
                 .stream()
                 .collect(Collectors.groupingBy(
@@ -152,8 +143,12 @@ public class PlanningService {
                 ));
 
         vehicleWeekdaysMap.forEach((vehicleId, weekdays) -> {
-            if (weekdays.size() != Weekday.values().length) {
+            if (!weekdays.containsAll(Set.of(Weekday.values()))) {
                 throw new ApiException(HttpStatus.BAD_REQUEST, "Vehicle ID " + vehicleId + " does not have availabilities for all weekdays");
+            }
+
+            if (weekdays.size() != Weekday.values().length) {
+                throw new ApiException(HttpStatus.BAD_REQUEST, "Vehicle ID " + vehicleId + " has duplicate weekdays");
             }
         });
 
