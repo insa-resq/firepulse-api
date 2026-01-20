@@ -11,6 +11,7 @@ import org.resq.firepulseapi.coordinationservice.exceptions.ApiException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.util.Pair;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
@@ -80,21 +81,12 @@ public class CoordinationService {
 
     public void bookVehicles(List<FireStationBookingDto> fireStationBookingDtos) {
         executeWithAuthentication(() -> {
-            Weekday currentWeekday = getCurrentWeekday();
-
             fireStationBookingDtos.forEach(dto -> {
-                Map<VehicleType, VehicleDto> fireStationVehiclesMap =
-                        registryClient.getVehicles(authenticationHeaderValue, dto.getStationId())
-                                .stream()
-                                .collect(Collectors.toMap(VehicleDto::getType, vehicleDto -> vehicleDto));
+                Pair<Map<VehicleType, VehicleDto>, Map<String, VehicleAvailabilityDto>> stationData =
+                        getStationVehiclesAndAvailabilities(dto.getStationId());
 
-                Map<String, VehicleAvailabilityDto> vehicleAvailabilitiesMap =
-                        planningClient.getVehicleAvailabilities(
-                                authenticationHeaderValue,
-                                fireStationVehiclesMap.values().stream().map(VehicleDto::getId).toList(),
-                                currentWeekday
-                        ).stream()
-                                .collect(Collectors.toMap(VehicleAvailabilityDto::getVehicleId, vaDto -> vaDto));
+                Map<VehicleType, VehicleDto> fireStationVehiclesMap = stationData.getFirst();
+                Map<String, VehicleAvailabilityDto> vehicleAvailabilitiesMap = stationData.getSecond();
 
                 List<VehicleAvailabilityUpdateDto> vehicleAvailabilityUpdateDtos = dto.getVehicles()
                         .stream()
@@ -127,21 +119,11 @@ public class CoordinationService {
 
     public void dropVehicles(List<FireStationDroppingDto> fireStationDroppingDtos) {
         executeWithAuthentication(() -> {
-            Weekday currentWeekday = getCurrentWeekday();
-
             fireStationDroppingDtos.forEach(dto -> {
-                Map<VehicleType, VehicleDto> fireStationVehiclesMap =
-                        registryClient.getVehicles(authenticationHeaderValue, dto.getStationId())
-                                .stream()
-                                .collect(Collectors.toMap(VehicleDto::getType, vehicleDto -> vehicleDto));
-
-                Map<String, VehicleAvailabilityDto> vehicleAvailabilitiesMap =
-                        planningClient.getVehicleAvailabilities(
-                                authenticationHeaderValue,
-                                fireStationVehiclesMap.values().stream().map(VehicleDto::getId).toList(),
-                                currentWeekday
-                        ).stream()
-                                .collect(Collectors.toMap(VehicleAvailabilityDto::getVehicleId, vaDto -> vaDto));
+                Pair<Map<VehicleType, VehicleDto>, Map<String, VehicleAvailabilityDto>> stationData =
+                        getStationVehiclesAndAvailabilities(dto.getStationId());
+                Map<VehicleType, VehicleDto> fireStationVehiclesMap = stationData.getFirst();
+                Map<String, VehicleAvailabilityDto> vehicleAvailabilitiesMap = stationData.getSecond();
 
                 List<VehicleAvailabilityUpdateDto> vehicleAvailabilityUpdateDtos = dto.getVehicles()
                         .stream()
@@ -174,6 +156,25 @@ public class CoordinationService {
 
     private Weekday getCurrentWeekday() {
         return Weekday.values()[LocalDate.now().getDayOfWeek().getValue() - 1];
+    }
+
+    private Pair<Map<VehicleType, VehicleDto>, Map<String, VehicleAvailabilityDto>> getStationVehiclesAndAvailabilities(String stationId) {
+        Weekday currentWeekday = getCurrentWeekday();
+
+        Map<VehicleType, VehicleDto> fireStationVehiclesMap =
+                registryClient.getVehicles(authenticationHeaderValue, stationId)
+                        .stream()
+                        .collect(Collectors.toMap(VehicleDto::getType, vehicleDto -> vehicleDto));
+
+        Map<String, VehicleAvailabilityDto> vehicleAvailabilitiesMap =
+                planningClient.getVehicleAvailabilities(
+                                authenticationHeaderValue,
+                                fireStationVehiclesMap.values().stream().map(VehicleDto::getId).toList(),
+                                currentWeekday
+                        ).stream()
+                        .collect(Collectors.toMap(VehicleAvailabilityDto::getVehicleId, vaDto -> vaDto));
+
+        return Pair.of(fireStationVehiclesMap, vehicleAvailabilitiesMap);
     }
 
     private <T> T executeWithAuthentication(Callable<T> action) throws ApiException {
