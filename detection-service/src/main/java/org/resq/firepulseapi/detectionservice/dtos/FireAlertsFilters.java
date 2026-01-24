@@ -9,14 +9,14 @@ import org.resq.firepulseapi.detectionservice.entities.enums.AlertStatus;
 import org.resq.firepulseapi.detectionservice.entities.enums.FireSeverity;
 
 import java.time.Instant;
-import java.util.List;
+import java.util.Set;
 
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
 public class FireAlertsFilters {
-    private List<FireSeverity> severities;
-    private List<AlertStatus> statuses;
+    private Set<FireSeverity> severities;
+    private Set<AlertStatus> statuses;
     private Instant createdAt;
     private Instant createdAtFrom;
     private Instant createdAtTo;

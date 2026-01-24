@@ -11,6 +11,9 @@ import org.resq.firepulseapi.coordinationservice.exceptions.ApiException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.cache.Cache;
+import org.springframework.cache.CacheManager;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.util.Pair;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -27,7 +30,14 @@ public class CoordinationService {
     private final AccountsClient accountsClient;
     private final RegistryClient registryClient;
     private final PlanningClient planningClient;
+    private final CacheManager cacheManager;
+
     private static String authenticationHeaderValue;
+
+    private static class CacheKey {
+        public static final String ALL_FIRE_STATIONS = "ALL_FIRE_STATIONS";
+        public static final String FIRE_STATION_OVERVIEW = "FIRE_STATION_OVERVIEW";
+    }
 
     @Value("${http.internal.admin-email}")
     private String adminEmail;
@@ -35,16 +45,24 @@ public class CoordinationService {
     @Value("${http.internal.admin-password}")
     private String adminPassword;
 
-    public CoordinationService(AccountsClient accountsClient, RegistryClient registryClient, PlanningClient planningClient) {
+    public CoordinationService(
+            AccountsClient accountsClient,
+            RegistryClient registryClient,
+            PlanningClient planningClient,
+            CacheManager cacheManager
+    ) {
         this.accountsClient = accountsClient;
         this.registryClient = registryClient;
         this.planningClient = planningClient;
+        this.cacheManager = cacheManager;
     }
 
+    @Cacheable(value = CacheKey.ALL_FIRE_STATIONS)
     public List<FireStationDto> getAllFireStations() {
         return executeWithAuthentication(() -> registryClient.getFireStations(authenticationHeaderValue));
     }
 
+    @Cacheable(value = CacheKey.FIRE_STATION_OVERVIEW, key = "#stationId")
     public FireStationOverviewDto getFireStationOverview(String stationId) {
         return executeWithAuthentication(() -> {
             try {
@@ -113,6 +131,12 @@ public class CoordinationService {
                 planningClient.updateVehicleAvailabilities(authenticationHeaderValue, vehicleAvailabilityUpdateDtos);
             });
 
+            Cache stationOverviewCache = cacheManager.getCache(CacheKey.FIRE_STATION_OVERVIEW);
+
+            if (stationOverviewCache != null) {
+                fireStationBookingDtos.forEach(dto -> stationOverviewCache.evictIfPresent(dto.getStationId()));
+            }
+
             return null;
         });
     }
@@ -149,6 +173,12 @@ public class CoordinationService {
 
                 planningClient.updateVehicleAvailabilities(authenticationHeaderValue, vehicleAvailabilityUpdateDtos);
             });
+
+            Cache stationOverviewCache = cacheManager.getCache(CacheKey.FIRE_STATION_OVERVIEW);
+
+            if (stationOverviewCache != null) {
+                fireStationDroppingDtos.forEach(dto -> stationOverviewCache.evictIfPresent(dto.getStationId()));
+            }
 
             return null;
         });

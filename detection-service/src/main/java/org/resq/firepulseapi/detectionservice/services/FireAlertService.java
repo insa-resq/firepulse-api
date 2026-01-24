@@ -12,6 +12,11 @@ import org.resq.firepulseapi.detectionservice.repositories.ImageRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.cache.Cache;
+import org.springframework.cache.CacheManager;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.Caching;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -33,20 +38,29 @@ public class FireAlertService {
     private final FireAlertRepository fireAlertRepository;
     private final ImageRepository imageRepository;
     private final RestTemplate restTemplate;
+    private final CacheManager cacheManager;
 
     @Value("${http.coordination-team-api.base-url}")
     private String coordinationTeamBaseUrl;
 
+    private static class CacheKey {
+        public static final String FIRE_ALERT_BY_ID = "FIRE_ALERT_BY_ID";
+        public static final String FIRE_ALERTS_LIST = "FIRE_ALERTS_LIST";
+    }
+
     public FireAlertService(
             FireAlertRepository fireAlertRepository,
             ImageRepository imageRepository,
-            RestTemplate restTemplate
+            RestTemplate restTemplate,
+            CacheManager cacheManager
     ) {
         this.fireAlertRepository = fireAlertRepository;
         this.imageRepository = imageRepository;
         this.restTemplate = restTemplate;
+        this.cacheManager = cacheManager;
     }
 
+    @Cacheable(value = CacheKey.FIRE_ALERTS_LIST, key = "#filters")
     public List<FireAlertDto> getFireAlerts(FireAlertsFilters filters) {
         Specification<FireAlert> spec = buildSpecificationFromFilters(filters);
         return fireAlertRepository.findAll(spec).stream()
@@ -54,12 +68,18 @@ public class FireAlertService {
                 .toList();
     }
 
+    @Cacheable(value = CacheKey.FIRE_ALERT_BY_ID, key = "#fireAlertId")
     public FireAlertDto getFireAlertById(Integer fireAlertId) {
         return fireAlertRepository.findById(fireAlertId)
                 .map(FireAlertDto::fromEntity)
                 .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "FireAlert not found"));
     }
 
+    @Transactional
+    @Caching(evict = {
+            @CacheEvict(value = CacheKey.FIRE_ALERT_BY_ID, key = "#fireAlertId"),
+            @CacheEvict(value = CacheKey.FIRE_ALERTS_LIST, allEntries = true)
+    })
     public FireAlertDto updateFireAlertStatus(Integer fireAlertId, FireAlertStatusUpdateDto fireAlertStatusUpdateDto, UserRole userRole) {
         FireAlert fireAlert = fireAlertRepository.findById(fireAlertId)
                 .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "FireAlert not found"));
@@ -88,6 +108,8 @@ public class FireAlertService {
         return FireAlertDto.fromEntity(updatedFireAlert);
     }
 
+    @Transactional
+    @CacheEvict(value = CacheKey.FIRE_ALERTS_LIST, allEntries = true)
     public FireAlertDto createFireAlert(FireAlertCreationDto fireAlertCreationDto) {
         Image image = imageRepository.findById(fireAlertCreationDto.getImageId())
                 .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "Associated image not found"));
@@ -127,6 +149,7 @@ public class FireAlertService {
     }
 
     @Transactional
+    @CacheEvict(value = CacheKey.FIRE_ALERTS_LIST, allEntries = true)
     public void deleteFireAlerts(FireAlertsBulkDeletionDto fireAlertsBulkDeletionDto) {
         Set<Integer> fireAlertIdsSet = new HashSet<>(fireAlertsBulkDeletionDto.getFireAlertIds());
         List<FireAlert> fireAlertsToDelete = fireAlertRepository.findAllById(fireAlertIdsSet);
@@ -148,6 +171,11 @@ public class FireAlertService {
         }
 
         fireAlertRepository.deleteAllInBatch(fireAlertsToDelete);
+
+        Cache fireAlertByIdCache = cacheManager.getCache(CacheKey.FIRE_ALERT_BY_ID);
+        if (fireAlertByIdCache != null) {
+            fireAlertsToDelete.forEach(fireAlert -> fireAlertByIdCache.evictIfPresent(fireAlert.getId()));
+        }
     }
 
     private Specification<FireAlert> buildSpecificationFromFilters(FireAlertsFilters filters) {

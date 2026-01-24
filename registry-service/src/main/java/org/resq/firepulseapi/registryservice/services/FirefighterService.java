@@ -6,6 +6,7 @@ import org.resq.firepulseapi.registryservice.dtos.FirefighterFilters;
 import org.resq.firepulseapi.registryservice.entities.Firefighter;
 import org.resq.firepulseapi.registryservice.exceptions.ApiException;
 import org.resq.firepulseapi.registryservice.repositories.FirefighterRepository;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -17,10 +18,17 @@ import java.util.List;
 public class FirefighterService {
     private final FirefighterRepository firefighterRepository;
 
+    private static class CacheKey {
+        public static final String FIREFIGHTER_BY_ID = "FIREFIGHTER_BY_ID";
+        public static final String FIREFIGHTER_BY_USER_ID = "FIREFIGHTER_BY_USER_ID";
+        public static final String FIREFIGHTERS_LIST = "FIREFIGHTERS_LIST";
+    }
+
     public FirefighterService(FirefighterRepository firefighterRepository) {
         this.firefighterRepository = firefighterRepository;
     }
 
+    @Cacheable(value = CacheKey.FIREFIGHTERS_LIST, key = "#filters")
     public List<FirefighterDto> getAllFirefighters(FirefighterFilters filters) {
         Specification<Firefighter> specification = buildSpecificationFromFilters(filters);
         return firefighterRepository.findAll(specification)
@@ -29,12 +37,14 @@ public class FirefighterService {
                 .toList();
     }
 
+    @Cacheable(value = CacheKey.FIREFIGHTER_BY_ID, key = "#firefighterId")
     public FirefighterDto getFirefighterById(String firefighterId) {
         return firefighterRepository.findById(firefighterId)
                 .map(FirefighterDto::fromEntity)
                 .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "Firefighter not found"));
     }
 
+    @Cacheable(value = CacheKey.FIREFIGHTER_BY_USER_ID, key = "#userId")
     public FirefighterDto getFirefighterByUserId(String userId) {
         return firefighterRepository.findFirefighterByUserId(userId)
                 .map(FirefighterDto::fromEntity)

@@ -5,9 +5,12 @@ import org.resq.firepulseapi.planningservice.dtos.*;
 import org.resq.firepulseapi.planningservice.entities.VehicleAvailability;
 import org.resq.firepulseapi.planningservice.exceptions.ApiException;
 import org.resq.firepulseapi.planningservice.repositories.VehicleAvailabilityRepository;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -18,10 +21,15 @@ import java.util.stream.Collectors;
 public class VehicleAvailabilityService {
     private final VehicleAvailabilityRepository vehicleAvailabilityRepository;
 
+    private static class CacheKey {
+        public static final String VEHICLE_AVAILABILITIES_LIST = "VEHICLE_AVAILABILITIES_LIST";
+    }
+
     public VehicleAvailabilityService(VehicleAvailabilityRepository vehicleAvailabilityRepository) {
         this.vehicleAvailabilityRepository = vehicleAvailabilityRepository;
     }
 
+    @Cacheable(value = CacheKey.VEHICLE_AVAILABILITIES_LIST, key = "#filters")
     public List<VehicleAvailabilityDto> getVehicleAvailabilities(VehicleAvailabilitiesFilters filters) {
         Specification<VehicleAvailability> specification = buildSpecificationFromFilters(filters);
         return vehicleAvailabilityRepository.findAll(specification)
@@ -30,6 +38,8 @@ public class VehicleAvailabilityService {
                 .toList();
     }
 
+    @Transactional
+    @CacheEvict(value = CacheKey.VEHICLE_AVAILABILITIES_LIST, allEntries = true)
     public List<VehicleAvailabilityDto> updateVehicleAvailabilities(List<VehicleAvailabilityUpdateDto> vehicleAvailabilityUpdateDtos) {
         List<String> vehicleAvailabilityIds = vehicleAvailabilityUpdateDtos.stream()
                 .map(VehicleAvailabilityUpdateDto::getAvailabilityId)

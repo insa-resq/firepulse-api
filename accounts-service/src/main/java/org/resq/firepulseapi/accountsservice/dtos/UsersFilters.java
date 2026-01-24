@@ -6,13 +6,13 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.resq.firepulseapi.accountsservice.entities.enums.UserRole;
 
-import java.util.List;
+import java.util.Set;
 
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
 public class UsersFilters {
     private String emailContains;
-    private List<UserRole> roles;
-    private List<@NotBlank(message = "Station ID cannot be blank") String> stationIds;
+    private Set<UserRole> roles;
+    private Set<@NotBlank(message = "Station ID cannot be blank") String> stationIds;
 }

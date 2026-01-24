@@ -10,6 +10,7 @@ import org.resq.firepulseapi.planningservice.entities.enums.UserRole;
 import org.resq.firepulseapi.planningservice.exceptions.ApiException;
 import org.resq.firepulseapi.planningservice.repositories.PlanningRepository;
 import org.resq.firepulseapi.planningservice.repositories.ShiftAssignmentRepository;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -26,6 +27,11 @@ public class ShiftAssignmentService {
     private final AccountsClient accountsClient;
     private final RegistryClient registryClient;
 
+    static class CacheKey {
+        public static final String SHIFT_ASSIGNMENTS_LIST = "SHIFT_ASSIGNMENTS_LIST";
+        public static final String DETAILED_SHIFT_ASSIGNMENTS_LIST = "DETAILED_SHIFT_ASSIGNMENTS_LIST";
+    }
+
     public ShiftAssignmentService(
             ShiftAssignmentRepository shiftAssignmentRepository,
             PlanningRepository planningRepository,
@@ -38,6 +44,7 @@ public class ShiftAssignmentService {
         this.registryClient = registryClient;
     }
 
+    @Cacheable(value = CacheKey.SHIFT_ASSIGNMENTS_LIST, key = "#userId + '-' + #userRole + '-' + #filters")
     public List<ShiftAssignmentDto> getShiftAssignments(String userId, UserRole userRole, ShiftAssignmentsFilters filters) {
         if (userRole == UserRole.FIREFIGHTER) {
             filters.setFirefighterId(userId);
@@ -62,6 +69,7 @@ public class ShiftAssignmentService {
                 .toList();
     }
 
+    @Cacheable(value = CacheKey.DETAILED_SHIFT_ASSIGNMENTS_LIST, key = "#userId + '-' + #userRole + '-' + #filters")
     public List<DetailedShiftAssignmentDto> getDetailedShiftAssignments(String userId, UserRole userRole, ShiftAssignmentsFilters filters) {
         Planning planning = planningRepository.findById(filters.getPlanningId())
                 .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "Planning not found"));

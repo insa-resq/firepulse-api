@@ -7,6 +7,7 @@ import org.resq.firepulseapi.registryservice.dtos.FirefighterTrainingFilters;
 import org.resq.firepulseapi.registryservice.entities.FirefighterTraining;
 import org.resq.firepulseapi.registryservice.exceptions.ApiException;
 import org.resq.firepulseapi.registryservice.repositories.FirefighterTrainingRepository;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -19,6 +20,12 @@ import java.util.List;
 public class FirefighterTrainingService {
     private final FirefighterTrainingRepository trainingRepository;
 
+    private static class CacheKey {
+        public static final String TRAINING_BY_ID = "TRAINING_BY_ID";
+        public static final String TRAININGS_LIST = "TRAININGS_LIST";
+    }
+
+    @Cacheable(value = CacheKey.TRAININGS_LIST, key = "#filters")
     public List<FirefighterTrainingDto> getAllTrainings(FirefighterTrainingFilters filters) {
         Specification<FirefighterTraining> specification = buildSpecificationFromFilters(filters);
         return trainingRepository.findAll(specification)
@@ -27,6 +34,7 @@ public class FirefighterTrainingService {
                 .toList();
     }
 
+    @Cacheable(value = CacheKey.TRAINING_BY_ID, key = "#trainingId")
     public FirefighterTrainingDto getTrainingById(String trainingId) {
         return trainingRepository.findById(trainingId)
                 .map(FirefighterTrainingDto::fromEntity)

@@ -8,6 +8,9 @@ import org.resq.firepulseapi.accountsservice.entities.User;
 import org.resq.firepulseapi.accountsservice.entities.enums.UserRole;
 import org.resq.firepulseapi.accountsservice.exceptions.ApiException;
 import org.resq.firepulseapi.accountsservice.repositories.UserRepository;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.Caching;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -25,12 +28,18 @@ public class UserService {
 
     private static final String DEFAULT_AVATAR_URL = "https://api.dicebear.com/9.x/bottts-neutral/svg";
 
+    private static class CacheKey {
+        public static final String USER_BY_ID = "USER_BY_ID";
+        public static final String USERS_LIST = "USERS_LIST";
+    }
+
     public UserService(UserRepository userRepository, PasswordEncoder passwordEncoder, RegistryClient registryClient) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.registryClient = registryClient;
     }
 
+    @CacheEvict(value = CacheKey.USERS_LIST, allEntries = true)
     public UserDto createUser(UserCreationDto userCreationDto, UserRole role) {
         if (userRepository.existsByEmail(userCreationDto.getEmail())) {
             throw new ApiException(HttpStatus.CONFLICT, "Email is already in use");
@@ -58,17 +67,15 @@ public class UserService {
         return UserDto.fromEntity(newUser);
     }
 
-    public UserDto getUserById(String authenticatedUserId, UserRole authenticatedUserRole, String userId) {
+    @Cacheable(value = CacheKey.USER_BY_ID, key = "#userId")
+    public UserDto getUserById(String userId) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "User not found"));
-
-        if (authenticatedUserRole != null && authenticatedUserRole != UserRole.ADMIN && !authenticatedUserId.equals(userId)) {
-            throw new ApiException(HttpStatus.FORBIDDEN, "You are not authorized to access this user's information");
-        }
 
         return UserDto.fromEntity(user);
     }
 
+    @Cacheable(value = CacheKey.USERS_LIST, key = "#filters")
     public List<UserDto> getAllUsers(UsersFilters filters) {
         Specification<User> specification = buildSpecificationFromFilters(filters);
         return userRepository.findAll(specification).stream()
@@ -76,6 +83,11 @@ public class UserService {
                 .toList();
     }
 
+    @Transactional
+    @Caching(evict = {
+            @CacheEvict(value = CacheKey.USER_BY_ID, key = "#userId"),
+            @CacheEvict(value = CacheKey.USERS_LIST, allEntries = true)
+    })
     public UserDto updateUserById(String userId, UserProfileUpdateDto userProfileUpdateDto) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "User not found"));
@@ -95,6 +107,11 @@ public class UserService {
         return UserDto.fromEntity(updatedUser);
     }
 
+    @Transactional
+    @Caching(evict = {
+            @CacheEvict(value = CacheKey.USER_BY_ID, key = "#userId"),
+            @CacheEvict(value = CacheKey.USERS_LIST, allEntries = true)
+    })
     public UserDto updateUserStationById(String userId, UserStationUpdateDto userStationUpdateDto) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "User not found"));
@@ -113,6 +130,10 @@ public class UserService {
     }
 
     @Transactional
+    @Caching(evict = {
+            @CacheEvict(value = CacheKey.USER_BY_ID, key = "#userId"),
+            @CacheEvict(value = CacheKey.USERS_LIST, allEntries = true)
+    })
     public void deleteUserById(String userId) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "User not found"));

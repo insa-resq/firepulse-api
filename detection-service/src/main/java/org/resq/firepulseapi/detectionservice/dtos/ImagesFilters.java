@@ -5,12 +5,12 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.resq.firepulseapi.detectionservice.entities.enums.ImageSplit;
 
-import java.util.List;
+import java.util.Set;
 
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
 public class ImagesFilters {
-    private List<ImageSplit> splits;
+    private Set<ImageSplit> splits;
     private Boolean containsFire;
 }

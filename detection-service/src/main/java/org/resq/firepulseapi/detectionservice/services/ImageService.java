@@ -8,6 +8,10 @@ import org.resq.firepulseapi.detectionservice.entities.Image;
 import org.resq.firepulseapi.detectionservice.exceptions.ApiException;
 import org.resq.firepulseapi.detectionservice.repositories.ImageRepository;
 import org.resq.firepulseapi.detectionservice.utils.Conversion;
+import org.springframework.cache.Cache;
+import org.springframework.cache.CacheManager;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -22,11 +26,19 @@ import java.util.stream.Collectors;
 @Service
 public class ImageService {
     private final ImageRepository imageRepository;
+    private final CacheManager cacheManager;
 
-    public ImageService(ImageRepository imageRepository) {
-        this.imageRepository = imageRepository;
+    private static class CacheKey {
+        public static final String IMAGE_BY_ID = "IMAGE_BY_ID";
+        public static final String IMAGES_LIST = "IMAGES_LIST";
     }
 
+    public ImageService(ImageRepository imageRepository, CacheManager cacheManager) {
+        this.imageRepository = imageRepository;
+        this.cacheManager = cacheManager;
+    }
+
+    @Cacheable(value = CacheKey.IMAGES_LIST, key = "#filters")
     public List<ImageDto> getImages(ImagesFilters filters) {
         Specification<Image> spec = buildSpecificationFromFilters(filters);
         return imageRepository.findAll(spec).stream()
@@ -34,6 +46,7 @@ public class ImageService {
                 .toList();
     }
 
+    @Cacheable(value = CacheKey.IMAGE_BY_ID, key = "#imageId")
     public ImageDto getImageById(String imageId) {
         return imageRepository.findById(imageId)
                 .map(ImageDto::fromEntity)
@@ -41,6 +54,7 @@ public class ImageService {
     }
 
     @Transactional
+    @CacheEvict(value = CacheKey.IMAGES_LIST, allEntries = true)
     public List<ImageDto> createImages(ImagesBulkCreationDto imagesBulkCreationDto) {
         Set<String> urlsSet = new HashSet<>();
         List<Integer> duplicateIndices = new ArrayList<>();
@@ -81,6 +95,7 @@ public class ImageService {
     }
 
     @Transactional
+    @CacheEvict(value = CacheKey.IMAGES_LIST, allEntries = true)
     public void deleteImages(List<String> imageIds) {
         Set<String> imageIdsSet = new HashSet<>(imageIds);
         List<Image> imagesToDelete = imageRepository.findAllById(imageIdsSet);
@@ -102,6 +117,11 @@ public class ImageService {
         }
 
         imageRepository.deleteAllInBatch(imagesToDelete);
+
+        Cache imageByIdCache = cacheManager.getCache(CacheKey.IMAGE_BY_ID);
+        if (imageByIdCache != null) {
+            imagesToDelete.forEach(image -> imageByIdCache.evictIfPresent(image.getId()));
+        }
     }
 
     private Specification<Image> buildSpecificationFromFilters(ImagesFilters filters) {

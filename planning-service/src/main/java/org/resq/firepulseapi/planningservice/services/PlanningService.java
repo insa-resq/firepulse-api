@@ -18,6 +18,11 @@ import org.resq.firepulseapi.planningservice.repositories.VehicleAvailabilityRep
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.cache.Cache;
+import org.springframework.cache.CacheManager;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.Caching;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -40,9 +45,15 @@ public class PlanningService {
     private final AccountsClient accountsClient;
     private final RegistryClient registryClient;
     private final RestTemplate restTemplate;
+    private final CacheManager cacheManager;
 
     @Value("${http.planning-engine-api.base-url}")
     private String planningEngineApiBaseUrl;
+
+    private static class CacheKey {
+        public static final String PLANNING_BY_ID = "PLANNING_BY_ID";
+        public static final String PLANNINGS_LIST = "PLANNINGS_LIST";
+    }
 
     public PlanningService(
             PlanningRepository planningRepository,
@@ -50,7 +61,8 @@ public class PlanningService {
             VehicleAvailabilityRepository vehicleAvailabilityRepository,
             AccountsClient accountsClient,
             RegistryClient registryClient,
-            RestTemplate restTemplate
+            RestTemplate restTemplate,
+            CacheManager cacheManager
     ) {
         this.planningRepository = planningRepository;
         this.shiftAssignmentRepository = shiftAssignmentRepository;
@@ -58,8 +70,10 @@ public class PlanningService {
         this.accountsClient = accountsClient;
         this.registryClient = registryClient;
         this.restTemplate = restTemplate;
+        this.cacheManager = cacheManager;
     }
 
+    @Cacheable(value = CacheKey.PLANNINGS_LIST, key = "#userId + '-' + #userRole + '-' + #filters")
     public List<PlanningDto> getPlannings(String userId, UserRole userRole, PlanningsFilters filters) {
         if (userRole == UserRole.FIREFIGHTER || userRole == UserRole.PLANNING_MANAGER) {
             UserDto user = accountsClient.getUserById(userId);
@@ -74,6 +88,7 @@ public class PlanningService {
                 .toList();
     }
 
+    @Cacheable(value = CacheKey.PLANNING_BY_ID, key = "#userId + '-' + #userRole + '-' + #planningId")
     public PlanningDto getPlanning(String userId, UserRole userRole, String planningId) {
         Planning planning = planningRepository.findById(planningId)
                 .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "Planning not found"));
@@ -85,6 +100,8 @@ public class PlanningService {
         return PlanningDto.fromEntity(planning);
     }
 
+    @Transactional
+    @CacheEvict(value = CacheKey.PLANNINGS_LIST, allEntries = true)
     public PlanningDto createPlanning(String userId, UserRole userRole, PlanningCreationDto planningCreationDto) {
         try {
             registryClient.getFireStationById(planningCreationDto.getStationId());
@@ -131,6 +148,10 @@ public class PlanningService {
     }
 
     @Transactional
+    @Caching(evict = {
+            @CacheEvict(value = CacheKey.PLANNING_BY_ID, key = "#planningId"),
+            @CacheEvict(value = CacheKey.PLANNINGS_LIST, allEntries = true)
+    })
     public FinalizedPlanningDto finalizePlanning(String planningId, PlanningFinalizationDto planningFinalizationDto) {
         Planning planning = planningRepository.findById(planningId)
                 .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "Planning not found"));
@@ -266,6 +287,8 @@ public class PlanningService {
         return finalizedPlanningDto;
     }
 
+    @Transactional
+    @CacheEvict(value = {CacheKey.PLANNING_BY_ID, CacheKey.PLANNINGS_LIST}, allEntries = true)
     public PlanningDto regeneratePlanning(String userId, UserRole userRole, String planningId) {
         Planning planning = planningRepository.findById(planningId)
                 .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "Planning not found"));
@@ -290,6 +313,8 @@ public class PlanningService {
         return PlanningDto.fromEntity(updatedPlanning);
     }
 
+    @Transactional
+    @CacheEvict(value = {CacheKey.PLANNING_BY_ID, CacheKey.PLANNINGS_LIST}, allEntries = true)
     public void deletePlanning(String userId, UserRole userRole, String planningId) {
         Planning planning = planningRepository.findById(planningId)
                 .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "Planning not found"));
@@ -301,6 +326,7 @@ public class PlanningService {
         planningRepository.delete(planning);
     }
 
+    @Transactional
     public void deleteShiftAssignmentsByPlanningId(String userId, UserRole userRole, String planningId) {
         Planning planning = planningRepository.findById(planningId)
                 .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "Planning not found"));
@@ -312,6 +338,16 @@ public class PlanningService {
         List<ShiftAssignment> shiftAssignments = shiftAssignmentRepository.findByPlanningId(planningId);
 
         shiftAssignmentRepository.deleteAllInBatch(shiftAssignments);
+
+        Cache shiftAssignmentsListCache = cacheManager.getCache(ShiftAssignmentService.CacheKey.SHIFT_ASSIGNMENTS_LIST);
+        if (shiftAssignmentsListCache != null) {
+            shiftAssignmentsListCache.clear();
+        }
+
+        Cache detailedShiftAssignmentsListCache = cacheManager.getCache(ShiftAssignmentService.CacheKey.DETAILED_SHIFT_ASSIGNMENTS_LIST);
+        if (detailedShiftAssignmentsListCache != null) {
+            detailedShiftAssignmentsListCache.clear();
+        }
     }
 
     private void startPlanningGeneration(String planningId) {

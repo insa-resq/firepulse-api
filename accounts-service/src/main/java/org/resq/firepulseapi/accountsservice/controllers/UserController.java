@@ -9,7 +9,9 @@ import org.resq.firepulseapi.accountsservice.dtos.UserProfileUpdateDto;
 import org.resq.firepulseapi.accountsservice.dtos.UserStationUpdateDto;
 import org.resq.firepulseapi.accountsservice.dtos.UsersFilters;
 import org.resq.firepulseapi.accountsservice.entities.enums.UserRole;
+import org.resq.firepulseapi.accountsservice.exceptions.ApiException;
 import org.resq.firepulseapi.accountsservice.services.UserService;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -32,7 +34,7 @@ public class UserController {
     @Operation(summary = "Get the authenticated user's profile")
     public ResponseEntity<UserDto> getAuthenticatedUserProfile(@AuthenticationPrincipal Jwt jwt) {
         String userId = jwt.getSubject();
-        UserDto userDto = userService.getUserById(userId, null, userId);
+        UserDto userDto = userService.getUserById(userId);
         return ResponseEntity.ok(userDto);
     }
 
@@ -63,7 +65,12 @@ public class UserController {
             @PathVariable String userId
     ) {
         String authenticatedUserId = jwt.getSubject();
-        UserDto userDto = userService.getUserById(authenticatedUserId, authenticatedUserRole, userId);
+
+        if (authenticatedUserRole != null && authenticatedUserRole != UserRole.ADMIN && !authenticatedUserId.equals(userId)) {
+            throw new ApiException(HttpStatus.FORBIDDEN, "You are not authorized to access this user's information");
+        }
+
+        UserDto userDto = userService.getUserById(userId);
         return ResponseEntity.ok(userDto);
     }
 
