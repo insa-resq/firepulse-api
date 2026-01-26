@@ -22,7 +22,6 @@ import org.springframework.cache.Cache;
 import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
-import org.springframework.cache.annotation.Caching;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -148,10 +147,7 @@ public class PlanningService {
     }
 
     @Transactional
-    @Caching(evict = {
-            @CacheEvict(value = CacheKey.PLANNING_BY_ID, key = "#planningId"),
-            @CacheEvict(value = CacheKey.PLANNINGS_LIST, allEntries = true)
-    })
+    @CacheEvict(value = {CacheKey.PLANNING_BY_ID, CacheKey.PLANNINGS_LIST}, allEntries = true)
     public FinalizedPlanningDto finalizePlanning(String planningId, PlanningFinalizationDto planningFinalizationDto) {
         Planning planning = planningRepository.findById(planningId)
                 .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "Planning not found"));

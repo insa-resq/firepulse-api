@@ -1,5 +1,6 @@
 package org.resq.firepulseapi.coordinationservice.services;
 
+import com.nimbusds.jose.util.Pair;
 import feign.FeignException;
 import org.resq.firepulseapi.coordinationservice.clients.AccountsClient;
 import org.resq.firepulseapi.coordinationservice.clients.PlanningClient;
@@ -14,7 +15,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cache.Cache;
 import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.Cacheable;
-import org.springframework.data.util.Pair;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
@@ -103,8 +103,8 @@ public class CoordinationService {
                 Pair<Map<VehicleType, VehicleDto>, Map<String, VehicleAvailabilityDto>> stationData =
                         getStationVehiclesAndAvailabilities(dto.getStationId());
 
-                Map<VehicleType, VehicleDto> fireStationVehiclesMap = stationData.getFirst();
-                Map<String, VehicleAvailabilityDto> vehicleAvailabilitiesMap = stationData.getSecond();
+                Map<VehicleType, VehicleDto> fireStationVehiclesMap = stationData.getLeft();
+                Map<String, VehicleAvailabilityDto> vehicleAvailabilitiesMap = stationData.getRight();
 
                 List<VehicleAvailabilityUpdateDto> vehicleAvailabilityUpdateDtos = dto.getVehicles()
                         .stream()
@@ -146,8 +146,8 @@ public class CoordinationService {
             fireStationDroppingDtos.forEach(dto -> {
                 Pair<Map<VehicleType, VehicleDto>, Map<String, VehicleAvailabilityDto>> stationData =
                         getStationVehiclesAndAvailabilities(dto.getStationId());
-                Map<VehicleType, VehicleDto> fireStationVehiclesMap = stationData.getFirst();
-                Map<String, VehicleAvailabilityDto> vehicleAvailabilitiesMap = stationData.getSecond();
+                Map<VehicleType, VehicleDto> fireStationVehiclesMap = stationData.getLeft();
+                Map<String, VehicleAvailabilityDto> vehicleAvailabilitiesMap = stationData.getRight();
 
                 List<VehicleAvailabilityUpdateDto> vehicleAvailabilityUpdateDtos = dto.getVehicles()
                         .stream()
