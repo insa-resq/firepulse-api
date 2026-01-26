@@ -18,8 +18,6 @@ import org.resq.firepulseapi.planningservice.repositories.VehicleAvailabilityRep
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.cache.Cache;
-import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.jpa.domain.Specification;
@@ -44,7 +42,6 @@ public class PlanningService {
     private final AccountsClient accountsClient;
     private final RegistryClient registryClient;
     private final RestTemplate restTemplate;
-    private final CacheManager cacheManager;
 
     @Value("${http.planning-engine-api.base-url}")
     private String planningEngineApiBaseUrl;
@@ -60,8 +57,7 @@ public class PlanningService {
             VehicleAvailabilityRepository vehicleAvailabilityRepository,
             AccountsClient accountsClient,
             RegistryClient registryClient,
-            RestTemplate restTemplate,
-            CacheManager cacheManager
+            RestTemplate restTemplate
     ) {
         this.planningRepository = planningRepository;
         this.shiftAssignmentRepository = shiftAssignmentRepository;
@@ -69,7 +65,6 @@ public class PlanningService {
         this.accountsClient = accountsClient;
         this.registryClient = registryClient;
         this.restTemplate = restTemplate;
-        this.cacheManager = cacheManager;
     }
 
     @Cacheable(value = CacheKey.PLANNINGS_LIST, key = "#userId + '-' + #userRole + '-' + #filters")
@@ -147,7 +142,13 @@ public class PlanningService {
     }
 
     @Transactional
-    @CacheEvict(value = {CacheKey.PLANNING_BY_ID, CacheKey.PLANNINGS_LIST}, allEntries = true)
+    @CacheEvict(value = {
+            CacheKey.PLANNING_BY_ID,
+            CacheKey.PLANNINGS_LIST,
+            VehicleAvailabilityService.CacheKey.VEHICLE_AVAILABILITIES_LIST,
+            ShiftAssignmentService.CacheKey.SHIFT_ASSIGNMENTS_LIST,
+            ShiftAssignmentService.CacheKey.DETAILED_SHIFT_ASSIGNMENTS_LIST
+    }, allEntries = true)
     public FinalizedPlanningDto finalizePlanning(String planningId, PlanningFinalizationDto planningFinalizationDto) {
         Planning planning = planningRepository.findById(planningId)
                 .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "Planning not found"));
@@ -284,7 +285,13 @@ public class PlanningService {
     }
 
     @Transactional
-    @CacheEvict(value = {CacheKey.PLANNING_BY_ID, CacheKey.PLANNINGS_LIST}, allEntries = true)
+    @CacheEvict(value = {
+            CacheKey.PLANNING_BY_ID,
+            CacheKey.PLANNINGS_LIST,
+            VehicleAvailabilityService.CacheKey.VEHICLE_AVAILABILITIES_LIST,
+            ShiftAssignmentService.CacheKey.SHIFT_ASSIGNMENTS_LIST,
+            ShiftAssignmentService.CacheKey.DETAILED_SHIFT_ASSIGNMENTS_LIST
+    }, allEntries = true)
     public PlanningDto regeneratePlanning(String userId, UserRole userRole, String planningId) {
         Planning planning = planningRepository.findById(planningId)
                 .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "Planning not found"));
@@ -310,7 +317,13 @@ public class PlanningService {
     }
 
     @Transactional
-    @CacheEvict(value = {CacheKey.PLANNING_BY_ID, CacheKey.PLANNINGS_LIST}, allEntries = true)
+    @CacheEvict(value = {
+            CacheKey.PLANNING_BY_ID,
+            CacheKey.PLANNINGS_LIST,
+            VehicleAvailabilityService.CacheKey.VEHICLE_AVAILABILITIES_LIST,
+            ShiftAssignmentService.CacheKey.SHIFT_ASSIGNMENTS_LIST,
+            ShiftAssignmentService.CacheKey.DETAILED_SHIFT_ASSIGNMENTS_LIST
+    }, allEntries = true)
     public void deletePlanning(String userId, UserRole userRole, String planningId) {
         Planning planning = planningRepository.findById(planningId)
                 .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "Planning not found"));
@@ -323,6 +336,10 @@ public class PlanningService {
     }
 
     @Transactional
+    @CacheEvict(value = {
+            ShiftAssignmentService.CacheKey.SHIFT_ASSIGNMENTS_LIST,
+            ShiftAssignmentService.CacheKey.DETAILED_SHIFT_ASSIGNMENTS_LIST
+    }, allEntries = true)
     public void deleteShiftAssignmentsByPlanningId(String userId, UserRole userRole, String planningId) {
         Planning planning = planningRepository.findById(planningId)
                 .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "Planning not found"));
@@ -334,16 +351,6 @@ public class PlanningService {
         List<ShiftAssignment> shiftAssignments = shiftAssignmentRepository.findByPlanningId(planningId);
 
         shiftAssignmentRepository.deleteAllInBatch(shiftAssignments);
-
-        Cache shiftAssignmentsListCache = cacheManager.getCache(ShiftAssignmentService.CacheKey.SHIFT_ASSIGNMENTS_LIST);
-        if (shiftAssignmentsListCache != null) {
-            shiftAssignmentsListCache.clear();
-        }
-
-        Cache detailedShiftAssignmentsListCache = cacheManager.getCache(ShiftAssignmentService.CacheKey.DETAILED_SHIFT_ASSIGNMENTS_LIST);
-        if (detailedShiftAssignmentsListCache != null) {
-            detailedShiftAssignmentsListCache.clear();
-        }
     }
 
     private void startPlanningGeneration(String planningId) {

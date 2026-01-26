@@ -21,7 +21,7 @@ import java.util.stream.Collectors;
 public class VehicleAvailabilityService {
     private final VehicleAvailabilityRepository vehicleAvailabilityRepository;
 
-    private static class CacheKey {
+    static class CacheKey {
         public static final String VEHICLE_AVAILABILITIES_LIST = "VEHICLE_AVAILABILITIES_LIST";
     }
 
